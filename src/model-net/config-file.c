@@ -4,7 +4,7 @@
  *
  */
 
-#include "codes_config.h"
+#include "codes-config.h"
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
@@ -15,8 +15,8 @@
 #include <stdlib.h>
 #endif
 
-#include <configfile.h>
-#include "txt_configfile.h"
+#include <config-file.h>
+#include "txt-config-file.h"
 
 static int cf_equal_helper (struct ConfigVTable * h1, SectionHandle s1, struct ConfigVTable * h2,
       SectionHandle s2)

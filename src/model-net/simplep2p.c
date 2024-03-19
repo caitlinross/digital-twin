@@ -13,7 +13,7 @@
 #include "model-net-method.h"
 #include "model-net.h"
 #include "model-net-lp.h"
-#include "codes_mapping.h"
+#include "codes-mapping.h"
 #include "codes.h"
 #include "simplep2p.h"
 

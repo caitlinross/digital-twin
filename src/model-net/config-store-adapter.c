@@ -4,7 +4,7 @@
  *
  */
 
-#include "codes_config.h"
+#include "codes-config.h"
 #include <assert.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
@@ -14,8 +14,8 @@
 #endif
 
 #include <string.h>
-#include "configstoreadapter.h"
-#include "configstore.h"
+#include "config-store-adapter.h"
+#include "config-store.h"
 
 /* unused attribute is only used here, so use directly in source */
 #ifdef UNUSED
@@ -41,7 +41,7 @@ static int cfsa_getKey (void *  handle, SectionHandle section, const char * name
 
 
    count = mcs_valuecount (key);
-   
+
    if (count < 0)
       return count;
 
@@ -57,7 +57,7 @@ static int cfsa_getKey (void *  handle, SectionHandle section, const char * name
    }
 
 
-   dcount = 1; 
+   dcount = 1;
    mcs_getvaluemultiple (key, &tmp, &dcount);
 
    if (!dcount)
@@ -81,12 +81,12 @@ static int cfsa_getKey (void *  handle, SectionHandle section, const char * name
 static int cfsa_getMultiKey (void * handle, SectionHandle section, const char *name,
       char *** buf, size_t * e)
 {
-   mcs_entry * key = mcs_findkey ((mcs_entry*) (section ? section : handle), 
+   mcs_entry * key = mcs_findkey ((mcs_entry*) (section ? section : handle),
          name);
-   int count; 
+   int count;
    unsigned int dcount;
 
-   *e = 0; 
+   *e = 0;
    if (!key)
       return -1;
 
@@ -103,7 +103,7 @@ static int cfsa_getMultiKey (void * handle, SectionHandle section, const char *n
    return 1;
 }
 
-static int cfsa_listSection (void * handle, SectionHandle section, 
+static int cfsa_listSection (void * handle, SectionHandle section,
       SectionEntry * entries, size_t * maxentries)
 {
    mcs_section_entry * out;
@@ -121,7 +121,7 @@ static int cfsa_listSection (void * handle, SectionHandle section,
       *maxentries = 0;
       return count;
    }
-   
+
 
    if (count == 0)
    {
@@ -130,7 +130,7 @@ static int cfsa_listSection (void * handle, SectionHandle section,
    }
 
    ret = count;
-   
+
    out = (mcs_section_entry*) malloc (sizeof(mcs_section_entry)* *maxentries);
 
    count = mcs_listsection ((mcs_entry*)section, (mcs_section_entry*)out,  *maxentries);
@@ -229,7 +229,7 @@ struct ConfigVTable * cfsa_create (mcs_entry * e)
     struct ConfigVTable * newh = (struct ConfigVTable *) malloc (sizeof (struct ConfigVTable));
    *newh = cfsa_template;
    newh->data = e;
-   return newh; 
+   return newh;
 }
 
 struct ConfigVTable * cfsa_create_empty ()

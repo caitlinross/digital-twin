@@ -4,7 +4,7 @@
  *
  */
 
-#include "codes_config.h"
+#include "codes-config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -14,7 +14,7 @@
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
-#include "configstore.h"
+#include "config-store.h"
 
 
 struct  mcs_entry

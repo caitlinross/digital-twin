@@ -12,7 +12,7 @@
 #include "model-net-lp.h"
 #include "model-net-sched.h"
 #include "codes.h"
-#include <codes_mapping.h>
+#include <codes-mapping.h>
 
 
 #define STR_SIZE 16

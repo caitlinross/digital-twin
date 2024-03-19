@@ -1,8 +1,8 @@
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 
-flex_target(codes_lexer ${CMAKE_CURRENT_SOURCE_DIR}/configlex.l ${CMAKE_CURRENT_SOURCE_DIR}/configlex.c DEFINES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/configlex.h)
-bison_target(codes_parser ${CMAKE_CURRENT_SOURCE_DIR}/configparser.y ${CMAKE_CURRENT_SOURCE_DIR}/configparser.c DEFINES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/configparser.h)
+flex_target(codes_lexer ${CMAKE_CURRENT_SOURCE_DIR}/config-lex.l ${CMAKE_CURRENT_SOURCE_DIR}/config-lex.c DEFINES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/config-lex.h)
+bison_target(codes_parser ${CMAKE_CURRENT_SOURCE_DIR}/config-parser.y ${CMAKE_CURRENT_SOURCE_DIR}/config-parser.c DEFINES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/config-parser.h)
 ADD_FLEX_BISON_DEPENDENCY(codes_lexer codes_parser)
 
 cmake_print_variables(FLEX_codes_lexer_OUTPUTS)
@@ -11,13 +11,13 @@ cmake_print_variables(BISON_codes_parser_OUTPUTS)
 set(srcs
   codes-jobmap.c
   codes-mapping-context.c
-  codes_mapping.c
-  configfile.c
-  configglue.c
-  configlex.c
-  configparser.c
-  configstore.c
-  configstoreadapter.c
+  codes-mapping.c
+  config-file.c
+  config-glue.c
+  config-lex.c
+  config-parser.c
+  config-store.c
+  config-store-adapter.c
   configuration.c
   lp-io.c
   lp-msg.c
@@ -28,21 +28,21 @@ set(srcs
   model-net.c
   simplenet-upd.c
   simplep2p.c
-  txt_configfile.c
+  txt-config-file.c
 )
 
 set(headers
   codes-jobmap-method-impl.h
   codes-jobmap.h
   codes-mapping-context.h
+  codes-mapping.h
   codes.h
-  codes_mapping.h
-  configfile.h
-  configglue.h
-  configlex.h
-  configparser.h
-  configstore.h
-  configstoreadapter.h
+  config-file.h
+  config-glue.h
+  config-lex.h
+  config-parser.h
+  config-store.h
+  config-store-adapter.h
   configuration.h
   congestion-controller-core.h
   jenkins-hash.h
@@ -57,7 +57,7 @@ set(headers
   quicklist.h
   simplenet-upd.h
   simplep2p.h
-  txt_configfile.h
+  txt-config-file.h
 )
 
 # TODO set up different library modules that will get linked together
@@ -73,7 +73,7 @@ target_include_directories(codes
   $<INSTALL_INTERFACE:include>
 )
 
-CONFIGURE_FILE(codes_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/codes_config.h)
+CONFIGURE_FILE(codes-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/codes-config.h)
 
 #-------------------------------------------------------------------------------
 # installation

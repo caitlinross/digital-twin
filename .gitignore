@@ -1,1 +1,5 @@
 build
+src/model-net/config-lex.h
+src/model-net/config-lex.c
+src/model-net/config-parser.h
+src/model-net/config-parser.c

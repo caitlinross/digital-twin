@@ -6,11 +6,11 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include "txt_configfile.h"
-#include "configglue.h"
-#include "configparser.h"
-#include "configlex.h"
-#include "configstoreadapter.h"
+#include "txt-config-file.h"
+#include "config-glue.h"
+#include "config-parser.h"
+#include "config-lex.h"
+#include "config-store-adapter.h"
 
 #define MAX_CONFIG_SIZE 10*1024*1024
 

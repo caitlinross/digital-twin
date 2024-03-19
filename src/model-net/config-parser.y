@@ -17,7 +17,7 @@
 
 
 #include <assert.h>
-#include "configglue.h"
+#include "config-glue.h"
 
 #if defined __GNUC__
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -51,7 +51,7 @@
 }
 
 %{
-#include "configlex.h"
+#include "config-lex.h"
 
 int cfgp_error (YYLTYPE * loc, yyscan_t * scanner, ParserParams * p, 
                         const char * msg)

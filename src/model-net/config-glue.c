@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "configglue.h"
+#include "config-glue.h"
 
 int cfgp_lex_error (ParserParams * p, int lineno, int colno, const char * msg)
 {
@@ -19,7 +19,7 @@ int cfgp_lex_error (ParserParams * p, int lineno, int colno, const char * msg)
    return -1;
 }
 
-int cfgp_parser_error(ParserParams * p, const char * err, 
+int cfgp_parser_error(ParserParams * p, const char * err,
       unsigned int first_line, unsigned int first_column,
       unsigned int last_line, unsigned int last_column)
 {
@@ -33,7 +33,7 @@ int cfgp_parser_error(ParserParams * p, const char * err,
    }
    else if (last_line)
    {
-      snprintf (location, sizeof(location), "line %i, column %i", 
+      snprintf (location, sizeof(location), "line %i, column %i",
             last_line, last_column);
    }
    else

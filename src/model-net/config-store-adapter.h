@@ -7,8 +7,8 @@
 #ifndef SRC_COMMON_MODELCONFIG_CONFIGSTOREADAPTER_H
 #define SRC_COMMON_MODELCONFIG_CONFIGSTOREADAPTER_H
 
-#include <configfile.h>
-#include "configstore.h"
+#include <config-file.h>
+#include "config-store.h"
 
 #ifdef __cplusplus
 extern "C" {

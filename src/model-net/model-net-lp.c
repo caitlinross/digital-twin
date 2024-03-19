@@ -10,7 +10,7 @@
 #include "model-net-method.h"
 #include "model-net-lp.h"
 #include "model-net-sched.h"
-#include "codes_mapping.h"
+#include "codes-mapping.h"
 #include "jenkins-hash.h"
 
 #define MN_NAME "model_net_base"

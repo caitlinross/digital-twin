@@ -13,8 +13,8 @@
 #include "configuration.h"
 #include <ross.h>
 
-#include <configfile.h>
-#include "txt_configfile.h"
+#include <config-file.h>
+#include "txt-config-file.h"
 
 /*
  * Global to hold configuration in memory

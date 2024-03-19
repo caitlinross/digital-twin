@@ -9,7 +9,7 @@
 
 /* Common header for parser and lexer */
 
-#include <configfile.h>
+#include <config-file.h>
 
 
 typedef struct

@@ -5,7 +5,7 @@
  */
 
 #include <codes-mapping-context.h>
-#include <codes_mapping.h>
+#include <codes-mapping.h>
 
 static struct codes_mctx const CODES_MCTX_DEFAULT_VAL = {
     .type = CODES_MCTX_GROUP_MODULO,
