@@ -47,7 +47,7 @@ else(MPI_C_FOUND)
         message("         Or force CMake to build using the correct compiler (`export CC=mpicc`)")
 endif(MPI_C_FOUND)
 
-add_subdirectory(src)
+add_subdirectory(codes)
 
 ### DUMPI
 #set(DUMPI_BUILD_PATH "" CACHE PATH "Directory where dumpi include and lib are installed")
