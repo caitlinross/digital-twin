@@ -47,9 +47,13 @@ else(MPI_C_FOUND)
         message("         Or force CMake to build using the correct compiler (`export CC=mpicc`)")
 endif(MPI_C_FOUND)
 
-add_subdirectory(codes)
 
-### DUMPI
+## DUMPI
+set(CODES_HAVE_DUMPI FALSE)
+find_package(DUMPI)
+if (DUMPI_FOUND)
+  set(CODES_HAVE_DUMPI TRUE)
+endif()
 #set(DUMPI_BUILD_PATH "" CACHE PATH "Directory where dumpi include and lib are installed")
 #find_library(DUMPI_LIB undumpi PATHS ${DUMPI_BUILD_PATH}/lib)
 #if(NOT DUMPI_LIB)
@@ -63,7 +67,9 @@ add_subdirectory(codes)
 #        add_definitions(-DUSE_DUMPI=1)
 #        set(USE_DUMPI true)
 #endif()
-#
+
+add_subdirectory(codes)
+
 ### SWM
 #pkg_check_modules(SWM IMPORTED_TARGET swm)
 #if(NOT SWM_FOUND)

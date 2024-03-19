@@ -33,6 +33,12 @@ set(srcs
   model-net/simplep2p.c
 
 # util
+
+# workload
+  workload/codes-workload.c
+  workload/methods/codes-checkpoint-wrkld.c
+  workload/methods/codes-iomock-wrkld.c
+  workload/methods/test-workload-method.c
 )
 
 set(headers
@@ -68,16 +74,24 @@ set(headers
 
 # util
   util/jenkins-hash.h
+  util/quickhash.h
   util/quicklist.h
+
+# workload
+  workload/codes-workload.h
 )
 
-# TODO set up different library modules that will get linked together
+set(codes_deps)
+if (CODES_HAVE_DUMPI)
+  list(APPEND srcs workload/methods/codes-dumpi-trace-nw-wrkld.c)
+  list(APPEND codes_deps DUMPI::DUMPI)
+endif()
+
 add_library(codes ${srcs})
 add_library(CODES::CODES ALIAS codes)
 
-target_link_libraries(codes PUBLIC ROSS::ROSS)
+target_link_libraries(codes PUBLIC ROSS::ROSS ${codes_deps})
 
-cmake_print_variables(CODES_SOURCE_DIR)
 target_include_directories(codes
   PUBLIC
   $<BUILD_INTERFACE:${CODES_SOURCE_DIR}>
@@ -85,7 +99,6 @@ target_include_directories(codes
   $<INSTALL_INTERFACE:include>
 )
 
-cmake_print_variables(CMAKE_CURRENT_BINARY_DIR)
 CONFIGURE_FILE(config/codes-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/codes-config.h)
 
 #-------------------------------------------------------------------------------
