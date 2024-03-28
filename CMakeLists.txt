@@ -24,6 +24,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED True)
 
+option(CODES_ENABLE_TESTING "Enable testing" ON)
+option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+
 #prevent cmake from stripping the runtime path (important if shared libraries are imported)
 #SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
@@ -91,13 +94,9 @@ add_subdirectory(codes)
 #                set(USE_ONLINE true)
 #        endif()
 #endif()
-#
-### RECORDER
-#option(USE_RECORDER "use recorder io workload" ON)
-#if(USE_RECORDER)
-#        add_definitions(-DUSE_RECORDER=1)
-#endif()
-#
-#add_subdirectory(src)
-#
-#configure_file(codes_config.h.in codes_config.h)
+
+if (CODES_ENABLE_TESTING)
+  enable_testing()
+  include(CTest)
+  add_subdirectory(tests)
+endif()
