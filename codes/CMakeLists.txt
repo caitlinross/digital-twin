@@ -20,8 +20,12 @@ set(srcs
   mapping/codes-jobmap.c
   mapping/codes-mapping-context.c
   mapping/codes-mapping.c
+  mapping/jobmap-dummy.c
+  mapping/jobmap-identity.c
+  mapping/jobmap-list.c
 
 # model-net
+  model-net/codes-comm.c
   model-net/lp-io.c
   model-net/lp-msg.c
   model-net/lp-type-lookup.c
@@ -33,6 +37,8 @@ set(srcs
   model-net/simplep2p.c
 
 # util
+  util/lookup3.c
+  util/congestion-controller.C
 
 # workload
   workload/codes-workload.c
@@ -73,6 +79,8 @@ set(headers
   model-net/simplep2p.h
 
 # util
+  util/congestion-controller-core.h
+  util/congestion-controller-model.h
   util/jenkins-hash.h
   util/quickhash.h
   util/quicklist.h

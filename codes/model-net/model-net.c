@@ -20,19 +20,6 @@
 
 extern struct model_net_method simplenet_method;
 extern struct model_net_method simplep2p_method;
-extern struct model_net_method torus_method;
-extern struct model_net_method dragonfly_method;
-extern struct model_net_method dragonfly_custom_method;
-extern struct model_net_method dragonfly_plus_method;
-extern struct model_net_method dragonfly_plus_router_method;
-extern struct model_net_method dragonfly_dally_method;
-extern struct model_net_method dragonfly_dally_router_method;
-extern struct model_net_method slimfly_method;
-extern struct model_net_method slimfly_router_method;
-extern struct model_net_method fattree_method;
-extern struct model_net_method dragonfly_router_method;
-extern struct model_net_method dragonfly_custom_router_method;
-extern struct model_net_method loggp_method;
 extern struct model_net_method express_mesh_method;
 extern struct model_net_method express_mesh_router_method;
 

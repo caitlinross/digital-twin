@@ -8,6 +8,7 @@
  * CODES custom mapping file for ROSS
  */
 #include "codes/mapping/codes-mapping.h"
+#include "codes/model-net/codes.h"
 #include "codes/model-net/congestion-controller-core.h"
 
 #define CODES_MAPPING_DEBUG 0

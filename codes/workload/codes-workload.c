@@ -20,7 +20,6 @@
 #define	DARSHAN_MPI_IO		0
 
 extern struct codes_workload_method test_workload_method;
-extern struct codes_workload_method iolang_workload_method;
 #ifdef USE_DUMPI
 extern struct codes_workload_method dumpi_trace_workload_method;
 #endif
@@ -45,7 +44,6 @@ extern struct codes_workload_method iomock_workload_method;
 static struct codes_workload_method const * method_array_default[] =
 {
     &test_workload_method,
-    &iolang_workload_method,
 #ifdef USE_DUMPI
     &dumpi_trace_workload_method,
 #endif

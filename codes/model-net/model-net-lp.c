@@ -851,7 +851,7 @@ void handle_sched_next(
     // callback-based scheduling loop (model_net_method_idle_event).
     // For all others, we need to schedule the next packet
     // immediately
-    else if (ns->net_id == SIMPLEP2P || ns->net_id == TORUS){
+    else if (ns->net_id == SIMPLEP2P){
         tw_event *e = tw_event_new(lp->gid,
                 poffset+codes_local_latency(lp), lp);
         model_net_wrap_msg *m_wrap = tw_event_data(e);
@@ -880,7 +880,7 @@ void handle_sched_next_rc(
     if (b->c0){
         *in_sched_loop = 1;
     }
-    else if (ns->net_id == SIMPLEP2P || ns->net_id == TORUS){
+    else if (ns->net_id == SIMPLEP2P){
         codes_local_latency_reverse(lp);
     }
 }
