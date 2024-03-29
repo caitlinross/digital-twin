@@ -32,6 +32,8 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 find_package(ROSS REQUIRED)
 
+find_package(GraphViz REQUIRED)
+
 #set(SWM_PKG_CONFIG_PATH "" CACHE PATH "Where is the SWM PKG_CONFIG installed?")
 #set(ARGOBOTS_PKG_CONFIG_PATH "" CACHE PATH "Where is argobots PKG_COPNFIG installed? Necessary for SWM")
 #

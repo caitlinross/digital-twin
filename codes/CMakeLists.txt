@@ -102,7 +102,7 @@ endif()
 add_library(codes ${srcs})
 add_library(CODES::CODES ALIAS codes)
 
-target_link_libraries(codes PUBLIC ROSS::ROSS ${codes_deps})
+target_link_libraries(codes PUBLIC ROSS::ROSS GraphViz::cgraph ${codes_deps})
 
 target_include_directories(codes
   PUBLIC
