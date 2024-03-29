@@ -58,6 +58,13 @@ if (DUMPI_FOUND)
   set(CODES_HAVE_DUMPI TRUE)
 endif()
 
+## libtorch
+set(CODES_HAVE_TORCH FALSE)
+find_package(Torch)
+if (TORCH_FOUND)
+  set(CODES_HAVE_TORCH TRUE)
+endif()
+
 add_subdirectory(codes)
 
 ### SWM

@@ -95,6 +95,10 @@ if (CODES_HAVE_DUMPI)
   list(APPEND codes_deps DUMPI::DUMPI)
 endif()
 
+if (CODES_HAVE_TORCH)
+    list(APPEND codes_deps ${TORCH_LIBRARIES})
+endif()
+
 add_library(codes ${srcs})
 add_library(CODES::CODES ALIAS codes)
 
