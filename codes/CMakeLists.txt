@@ -34,7 +34,9 @@ set(srcs
   model-net/model-net-sched.c
   model-net/model-net.c
   model-net/simplenet-upd.c
-  model-net/simplep2p.c
+
+# models
+  models/pdes/routers/simplep2p.c
 
 # orchestrator
   orchestrator/CodesYAML.cxx
@@ -80,7 +82,9 @@ set(headers
   model-net/model-net-sched.h
   model-net/model-net.h
   model-net/simplenet-upd.h
-  model-net/simplep2p.h
+
+# models
+  models/pdes/routers/simplep2p.h
 
 # orchestrator
   orchestrator/CodesYAML.h

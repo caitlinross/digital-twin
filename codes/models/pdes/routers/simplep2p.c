@@ -14,7 +14,7 @@
 #include "codes/model-net/model-net-method.h"
 #include "codes/model-net/model-net.h"
 #include "codes/model-net/model-net-lp.h"
-#include "codes/model-net/simplep2p.h"
+#include "codes/models/pdes/routers/simplep2p.h"
 #include "codes/util/jenkins-hash.h"
 
 // #define CATEGORY_NAME_MAX 16

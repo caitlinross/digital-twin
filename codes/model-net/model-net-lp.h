@@ -24,7 +24,7 @@ extern "C" {
 #include "codes/model-net/model-net.h"
 #include "codes/model-net/model-net-sched.h"
 #include "codes/model-net/simplenet-upd.h"
-#include "codes/model-net/simplep2p.h"
+#include "codes/models/pdes/routers/simplep2p.h"
 
 extern int model_net_base_magic;
 
