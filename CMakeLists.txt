@@ -18,7 +18,7 @@ extract_version_components("${version_txt}" "CODES_DT")
 # Get version from Git if we can
 determine_version(${PROJECT_SOURCE_DIR} ${GIT_EXECUTABLE} "CODES_DT")
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(CMAKE_C_STANDARD 11)
@@ -33,6 +33,8 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 find_package(ROSS REQUIRED)
 
 find_package(GraphViz REQUIRED)
+
+find_package(ryml REQUIRED)
 
 #set(SWM_PKG_CONFIG_PATH "" CACHE PATH "Where is the SWM PKG_CONFIG installed?")
 #set(ARGOBOTS_PKG_CONFIG_PATH "" CACHE PATH "Where is argobots PKG_COPNFIG installed? Necessary for SWM")
@@ -61,11 +63,13 @@ if (DUMPI_FOUND)
 endif()
 
 ## libtorch
-set(CODES_HAVE_TORCH FALSE)
-find_package(Torch)
-if (TORCH_FOUND)
-  set(CODES_HAVE_TORCH TRUE)
-endif()
+# TODO disabling for now
+# on my mac it's causing some security issues and won't load the library
+#set(CODES_HAVE_TORCH FALSE)
+#find_package(Torch)
+#if (TORCH_FOUND)
+#  set(CODES_HAVE_TORCH TRUE)
+#endif()
 
 add_subdirectory(codes)
 
@@ -90,6 +94,8 @@ add_subdirectory(codes)
 #                set(USE_ONLINE true)
 #        endif()
 #endif()
+
+add_subdirectory(client)
 
 if (CODES_ENABLE_TESTING)
   enable_testing()

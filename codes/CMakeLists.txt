@@ -36,6 +36,10 @@ set(srcs
   model-net/simplenet-upd.c
   model-net/simplep2p.c
 
+# orchestrator
+  orchestrator/CodesYAML.cxx
+  orchestrator/Orchestrator.cxx
+
 # util
   util/lookup3.c
   util/congestion-controller.C
@@ -78,6 +82,10 @@ set(headers
   model-net/simplenet-upd.h
   model-net/simplep2p.h
 
+# orchestrator
+  orchestrator/CodesYAML.h
+  orchestrator/Orchestrator.h
+
 # util
   util/congestion-controller-core.h
   util/congestion-controller-model.h
@@ -102,7 +110,13 @@ endif()
 add_library(codes ${srcs})
 add_library(CODES::CODES ALIAS codes)
 
-target_link_libraries(codes PUBLIC ROSS::ROSS GraphViz::cgraph ${codes_deps})
+target_link_libraries(codes
+  PUBLIC
+    ROSS::ROSS
+    ${codes_deps}
+  PRIVATE
+    GraphViz::cgraph
+    ryml::ryml)
 
 target_include_directories(codes
   PUBLIC
