@@ -1,0 +1,24 @@
+# this example will be a simple network of two routers with the simplep2p config
+# with one router connected to 2 hosts and the other connected to 3 hosts
+router_config0:
+  type: router
+  model: simplep2p
+  node_ids: [router0, router1]
+
+host_config0:
+  type: host
+  model: h1
+  node_ids: [host2, host3, host5, host6]
+
+#site:
+  # not sure if we'll need this, but any site-specific parameters we might need here
+  # id should match the label given in the DOT
+  # id: Starlight
+
+simulation:
+  packet_size: 512
+  modelnet_scheduler: fcfs
+  ross_message_size: 1024
+
+topology:
+  filename: "simplep2p-test-topology.dot"

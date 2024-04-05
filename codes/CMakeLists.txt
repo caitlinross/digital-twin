@@ -36,6 +36,7 @@ set(srcs
   model-net/simplenet-upd.c
 
 # models
+  models/pdes/hosts/SimpleServer.cxx
   models/pdes/routers/simplep2p.c
 
 # orchestrator
@@ -84,6 +85,7 @@ set(headers
   model-net/simplenet-upd.h
 
 # models
+  models/pdes/hosts/SimpleServer.h
   models/pdes/routers/simplep2p.h
 
 # orchestrator
@@ -91,6 +93,7 @@ set(headers
   orchestrator/Orchestrator.h
 
 # util
+  util/CodesUtils.h
   util/congestion-controller-core.h
   util/congestion-controller-model.h
   util/jenkins-hash.h
