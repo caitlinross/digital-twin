@@ -3,12 +3,12 @@
 router_config0:
   type: router
   model: simplep2p
-  node_ids: [router0, router1]
+  node_ids: [router0, router1, router2]
 
 host_config0:
   type: host
-  model: h1
-  node_ids: [host2, host3, host5, host6]
+  model: SimpleServer
+  node_ids: [host0, host1, host2]
 
 #site:
   # not sure if we'll need this, but any site-specific parameters we might need here
@@ -16,9 +16,9 @@ host_config0:
   # id: Starlight
 
 simulation:
-  packet_size: 512
+  packet_size: 1024
   modelnet_scheduler: fcfs
-  ross_message_size: 1024
+  ross_message_size: 312
 
 topology:
   filename: "simplep2p-test-topology.dot"

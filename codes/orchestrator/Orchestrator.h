@@ -32,6 +32,11 @@ public:
 
   bool IsSimulationConfigured();
 
+  // Register the LPs with model-net
+  void ModelNetRegister();
+
+  // map LPs to PEs
+  void CodesMappingSetup();
 
 private:
 

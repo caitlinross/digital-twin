@@ -18,12 +18,36 @@ namespace codes
 namespace orchestrator
 {
 
+enum class ComponentType
+{
+  Switch,
+  Router,
+  Host
+};
+
+// config info for a specific component
+struct LPConfig
+{
+  ComponentType Type;
+  std::string ConfigName;
+  std::string ModelName;
+  std::vector<std::string> NodeNames;
+};
+
+//struct LPGroups
+//{
+//  // not necessary, just get Groups.size()
+//  //int NumLPGroups;
+//  int NumUniqueLPTypes;
+//  std::vector<LPGroup> Groups;
+//};
+
 class CodesYAML
 {
 public:
   CodesYAML();
 
-  void ParseConfig(const std::string& configFile);
+  void ParseConfig(const std::string& configFile, std::vector<LPConfig>& lpConfigs);
 
 private:
   std::string YamlString;

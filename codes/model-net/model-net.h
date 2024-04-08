@@ -76,6 +76,12 @@ typedef struct mn_stats mn_stats;
     X(CONGESTION_CONTROLLER, "congestion_controller", "congestion_controller", NULL)\
     X(MAX_NETS,  NULL,                 NULL,        NULL)
 
+// TODO this needs to be rethought. we will potentially have a number of different models.
+// So for one thing, for all of our ML models, say for a router we have a number of different configs.
+// So there will be one router LP implemented in the code, and then that will load the appropriate pytorch model.
+// so maybe we don't need to rework this for now
+// I would like to do this better for making it easier in adding more types of lps in the future, but
+// i think it's not super necessary to worry about yet
 #define X(a,b,c,d) a,
 enum NETWORKS
 {

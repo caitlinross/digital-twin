@@ -543,6 +543,7 @@ void codes_mapping_setup_with_seed_offset(int offset)
     for (lpt = 0; lpt < lpconf.lpgroups[grp].lptypes_count; lpt++)
 	lps_per_pe_floor += (lpconf.lpgroups[grp].lptypes[lpt].count * lpconf.lpgroups[grp].repetitions);
    }
+  // so at this point lps_per_pe_floor is the total number of LPs in the sim
 
   tw_lpid global_nlps = lps_per_pe_floor;
   lps_leftover = lps_per_pe_floor % pes;
