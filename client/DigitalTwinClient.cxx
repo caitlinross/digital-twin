@@ -47,7 +47,8 @@ int main(int argc, char *argv[])
 
   std::string yamlFile = config_file;
   // setup the orchestrator and pass the config file
-  std::shared_ptr<codes::orchestrator::Orchestrator> orchestrator = std::make_shared<codes::orchestrator::Orchestrator>(yamlFile, MPI_COMM_WORLD);
+  auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
+  orchestrator.ParseConfig(config_file);
 
   // this part will be removed once orchestrator is working
   configuration_load(argv[2], MPI_COMM_WORLD, &config);
@@ -63,7 +64,7 @@ int main(int argc, char *argv[])
   // also this relies on a global variable lpconf from configuration.h
   // so it's heavliy dependent on that.
   // will need to rewrite this to work on my config
-  orchestrator->ModelNetRegister();
+  orchestrator.ModelNetRegister();
   /*model_net_register();
 
   // says this loads the config file and sets up the number of LPs on each PE

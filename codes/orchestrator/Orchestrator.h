@@ -11,6 +11,8 @@
 #ifndef CODES_ORCHESTRATOR_ORCHESTRATOR_H
 #define CODES_ORCHESTRATOR_ORCHESTRATOR_H
 
+#include "codes/orchestrator/CodesYAML.h"
+
 #include <mpi.h>
 
 #include <string>
@@ -27,8 +29,16 @@ namespace orchestrator
 class Orchestrator
 {
 public:
-  Orchestrator(const std::string& configFileName, MPI_Comm comm = MPI_COMM_WORLD);
-  ~Orchestrator();
+  /**
+   * Get the global Orchestrator instance
+   */
+  static Orchestrator& GetInstance();
+
+  void ParseConfig(const std::string& configFileName);
+
+  // TODO add ability to set MPI_COMM_CODES. just have default be MPI_COMM_WORLD
+
+  bool ConfigureSimulation(const std::string& configFileName, MPI_Comm comm = MPI_COMM_WORLD);
 
   bool IsSimulationConfigured();
 
@@ -39,9 +49,22 @@ public:
   void CodesMappingSetup();
 
 private:
+  Orchestrator();
+  Orchestrator(const Orchestrator&) = delete;
+  Orchestrator& operator=(const Orchestrator&) = delete;
+  virtual ~Orchestrator();
 
-  struct OrchestratorImpl;
-  std::unique_ptr<OrchestratorImpl> Impl;
+  static void CreateInstance();
+
+  static Orchestrator* Instance;
+  static bool Destroyed;
+
+  MPI_Comm Comm;
+  std::string ConfigFileName;
+
+  bool SimulationConfigured = false;
+  std::vector<int> ConfiguredNetworks;
+  std::vector<LPConfig> LPConfigs;
 
 };
 
