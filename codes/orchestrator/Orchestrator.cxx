@@ -75,8 +75,7 @@ void Orchestrator::ParseConfig(const std::string& configFileName)
 
   }
 
-  CodesYAML parser;
-  parser.ParseConfig(configFileName, this->LPConfigs);
+  this->YAMLParser.ParseConfig(configFileName);
 }
 
 bool Orchestrator::IsSimulationConfigured()
@@ -90,7 +89,8 @@ void Orchestrator::ModelNetRegister()
   // layer LPs (so any routers/switches essentially), note which ones we are using
   // then we need to call model_net_base_register to register them with ROSS. looks like we don't need
   // to update anything there
-  for (const auto& config : this->LPConfigs)
+  auto& lpConfigs = this->YAMLParser.GetLPTypeConfigs();
+  for (const auto& config : lpConfigs)
   {
     for (int n = 0; n < MAX_NETS; n++)
     {
@@ -105,10 +105,6 @@ void Orchestrator::ModelNetRegister()
       }
     }
   }
-
-  //model_net_base_register(this->ConfiguredNetworks.data());
-  // we actually do need to have our own version of this
-  // which is just called in the loop above
 }
 
 void Orchestrator::CodesMappingSetup()
@@ -116,7 +112,8 @@ void Orchestrator::CodesMappingSetup()
   int numPEs = tw_nnodes();
   // first get total number of LPs
   tw_lpid globalNumLPs = 0;
-  for (const auto& config : this->LPConfigs)
+  auto& lpConfigs = this->YAMLParser.GetLPTypeConfigs();
+  for (const auto& config : lpConfigs)
   {
     globalNumLPs += config.NodeNames.size();
   }

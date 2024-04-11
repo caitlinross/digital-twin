@@ -13,6 +13,9 @@
 
 #include <string>
 
+#include <ryml.hpp>
+#include <ryml_std.hpp>
+
 namespace codes
 {
 namespace orchestrator
@@ -26,11 +29,11 @@ enum class ComponentType
 };
 
 // config info for a specific component
-struct LPConfig
+struct LPTypeConfig
 {
   ComponentType Type;
   std::string ConfigName;
-  std::string ModelName;
+  std::string ModelName; // the codes LP name
   std::vector<std::string> NodeNames;
 };
 
@@ -47,11 +50,21 @@ class CodesYAML
 public:
   CodesYAML();
 
-  void ParseConfig(const std::string& configFile, std::vector<LPConfig>& lpConfigs);
+  void ParseConfig(const std::string& configFile);
+
+  std::vector<LPTypeConfig>& GetLPTypeConfigs();
+  std::vector<int>& GetLPTypeConfigIndices();
 
 private:
   std::string YamlString;
+  std::string DOTFileName;
 
+  std::vector<LPTypeConfig> LPConfigs;
+  // this is an index into this->LPConfigs
+  // this is an LPs local id mapped to its LP type
+  std::vector<int> LPTypeConfigIndices;
+
+  void RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex);
 };
 
 } // end namespace orchestrator

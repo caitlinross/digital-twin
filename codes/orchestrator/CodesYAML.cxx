@@ -9,6 +9,7 @@
 //============================================================================
 
 #include "codes/orchestrator/CodesYAML.h"
+#include "codes/orchestrator/GraphVizConfig.h"
 
 #include <ryml.hpp>
 #include <ryml_std.hpp>
@@ -24,11 +25,82 @@ namespace codes
 namespace orchestrator
 {
 
-namespace
+CodesYAML::CodesYAML()
 {
 
-void recurseConfig(ryml::ConstNodeRef root, LPConfig& lpConfig, std::string indent = "")
+
+}
+
+void CodesYAML::ParseConfig(const std::string& configFile)
 {
+  std::filesystem::path yamlPath(configFile);
+  if (!std::filesystem::exists(yamlPath))
+  {
+    std::cout << "the config file " << configFile << " does not exist!" << std::endl;
+  }
+  this->DOTFileName = yamlPath.parent_path();
+  this->DOTFileName += "/";
+
+  std::ifstream ifs(configFile, std::ifstream::in);
+  ifs.seekg(0, ifs.end);
+  int length = ifs.tellg();
+  ifs.seekg(0, ifs.beg);
+
+  std::string yaml(length, ' ');
+  ifs.read(&yaml[0], yaml.size());
+  ifs.close();
+  //std::cout << "yaml:\n" << yaml << std::endl;
+
+  // start parsing the file
+  ryml::Tree tree = ryml::parse_in_arena(ryml::to_csubstr(yaml));
+
+  ryml::ConstNodeRef root = tree.rootref();
+
+  this->LPConfigs.resize(root.num_children());
+  int typeIndex = 0;
+  for (ryml::ConstNodeRef const& child : root.children())
+  {
+    this->RecurseConfig(child, typeIndex);
+    typeIndex++;
+  }
+
+  // handle the topology section
+  if (!root["topology"].has_key() && !root["topology"].is_map())
+  {
+    std::cout << "error: there should be a topology section in the config" << std::endl;
+    return;
+  }
+  for (ryml::ConstNodeRef const& child : root["topology"])
+  {
+    if (child.is_keyval())
+    {
+      if (child.key() == "filename")
+      {
+        this->DOTFileName += std::string(child.val().str, child.val().len);
+        std::cout << "DOT File: " << this->DOTFileName << std::endl;
+      }
+    }
+
+  }
+
+  GraphVizConfig config;
+  config.ParseConfig(this->DOTFileName);
+
+}
+
+std::vector<LPTypeConfig>& CodesYAML::GetLPTypeConfigs()
+{
+  return this->LPConfigs;
+}
+
+std::vector<int>& CodesYAML::GetLPTypeConfigIndices()
+{
+  return this->LPTypeConfigIndices;
+}
+
+void CodesYAML::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)
+{
+  auto& lpConfig = this->LPConfigs[lpTypeIndex];
   if (root.is_keyval())
   {
     if (root.key() == "type")
@@ -52,6 +124,7 @@ void recurseConfig(ryml::ConstNodeRef root, LPConfig& lpConfig, std::string inde
     for (int i = 0; i < root.num_children(); i++)
     {
       lpConfig.NodeNames[i] = std::string(root[i].val().str, root[i].val().len);
+      this->LPTypeConfigIndices.push_back(lpTypeIndex);
     }
   }
   else if (root.has_key() && root.is_map())
@@ -61,50 +134,10 @@ void recurseConfig(ryml::ConstNodeRef root, LPConfig& lpConfig, std::string inde
       lpConfig.ConfigName = std::string(root.key().str, root.key().len);
     }
   }
-  indent += "\t";
   for (ryml::ConstNodeRef const& child : root.children())
   {
-    recurseConfig(child, lpConfig, indent);
+    this->RecurseConfig(child, lpTypeIndex);
   }
-}
-
-} // end anon namespace
-
-CodesYAML::CodesYAML()
-{
-
-
-}
-
-void CodesYAML::ParseConfig(const std::string& configFile, std::vector<LPConfig>& lpConfigs)
-{
-  if (!std::filesystem::exists(configFile))
-  {
-    std::cout << "the config file " << configFile << " does not exist!" << std::endl;
-  }
-
-  std::ifstream ifs(configFile, std::ifstream::in);
-  ifs.seekg(0, ifs.end);
-  int length = ifs.tellg();
-  ifs.seekg(0, ifs.beg);
-
-  std::string yaml(length, ' ');
-  ifs.read(&yaml[0], yaml.size());
-  ifs.close();
-  //std::cout << "yaml:\n" << yaml << std::endl;
-
-  // start parsing the file
-  ryml::Tree tree = ryml::parse_in_arena(ryml::to_csubstr(yaml));
-
-  ryml::ConstNodeRef root = tree.rootref();
-  lpConfigs.resize(root.num_children());
-  int typeIndex = 0;
-  for (ryml::ConstNodeRef const& child : root.children())
-  {
-    recurseConfig(child, lpConfigs[typeIndex]);
-    typeIndex++;
-  }
-
 }
 
 } // end namespace orchestrator

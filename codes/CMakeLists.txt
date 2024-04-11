@@ -41,6 +41,7 @@ set(srcs
 
 # orchestrator
   orchestrator/CodesYAML.cxx
+  orchestrator/GraphVizConfig.cxx
   orchestrator/Orchestrator.cxx
 
 # util
@@ -90,6 +91,7 @@ set(headers
 
 # orchestrator
   orchestrator/CodesYAML.h
+  orchestrator/GraphVizConfig.h
   orchestrator/Orchestrator.h
 
 # util
@@ -121,9 +123,10 @@ target_link_libraries(codes
   PUBLIC
     ROSS::ROSS
     ${codes_deps}
+    ryml::ryml
   PRIVATE
     GraphViz::cgraph
-    ryml::ryml)
+)
 
 target_include_directories(codes
   PUBLIC

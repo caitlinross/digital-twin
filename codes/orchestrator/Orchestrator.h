@@ -70,7 +70,6 @@ private:
 
   bool SimulationConfigured = false;
   std::vector<int> ConfiguredNetworks;
-  std::vector<LPConfig> LPConfigs;
 
   tw_lpid LPsPerPEFloor;
   tw_lpid LPsRemainder;
@@ -84,6 +83,8 @@ private:
   std::map<std::string, const tw_lptype*> LPNameMap;
 
   const tw_lptype* LPTypeLookup(const std::string& name);
+
+  CodesYAML YAMLParser;
 };
 
 } // end namespace orchestrator
