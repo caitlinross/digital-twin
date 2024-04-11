@@ -88,6 +88,35 @@ void CodesYAML::ParseConfig(const std::string& configFile)
 
   }
 
+  // handle the simulation config section
+  if (!root["simulation"].has_key() && !root["simulation"].is_map())
+  {
+    std::cout << "error: there should be a simulation section in the config" << std::endl;
+    return;
+  }
+  for (ryml::ConstNodeRef const& child : root["simulation"])
+  {
+    if (child.is_keyval())
+    {
+      if (child.key() == "packet_size")
+      {
+        auto parseSuccessful = ryml::atoi(child.val(), &this->SimConfig.PacketSize);
+        // TODO error checking/defaults
+        std::cout << "packet size: " << this->SimConfig.PacketSize << std::endl;
+      }
+      else if (child.key() == "modelnet_scheduler")
+      {
+        this->SimConfig.ModelNetScheduler = std::string(child.val().str, child.val().len);
+      }
+      else if (child.key() == "ross_message_size")
+      {
+        auto parseSuccessful = ryml::atoi(child.val(), &this->SimConfig.ROSSMessageSize);
+        // TODO error checking/defaults
+      }
+    }
+  }
+
+
   GraphVizConfig config;
   config.ParseConfig(this->DOTFileName);
 
@@ -101,6 +130,11 @@ std::vector<LPTypeConfig>& CodesYAML::GetLPTypeConfigs()
 std::vector<int>& CodesYAML::GetLPTypeConfigIndices()
 {
   return this->LPTypeConfigIndices;
+}
+
+const SimulationConfig& CodesYAML::GetSimulationConfig()
+{
+  return this->SimConfig;
 }
 
 void CodesYAML::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)

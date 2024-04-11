@@ -10,6 +10,7 @@
 
 #include "codes/models/pdes/hosts/SimpleServer.h"
 #include "codes/util/CodesUtils.h"
+#include "codes/orchestrator/Orchestrator.h"
 
 namespace
 {
@@ -80,7 +81,8 @@ tw_lptype SimpleServerLP = {
 // the tw_lptype struct
 void SimpleServerAddLPType()
 {
-  lp_type_register("nw-lp", &SimpleServerLP);
+  //lp_type_register("SimpleServer", &SimpleServerLP);
+  codes::orchestrator::Orchestrator::GetInstance().LPTypeRegister("SimpleServer", &SimpleServerLP);
 }
 
 void simple_server_init(

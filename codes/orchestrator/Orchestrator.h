@@ -51,8 +51,11 @@ public:
   void CodesMappingSetup();
 
   void CodesMappingInit();
+  tw_lp* CodesMappingToLP(tw_lpid lpid);
 
   void LPTypeRegister(const std::string& name, const tw_lptype* type);
+
+  int CodesMappingGetLPsForPE();
 
 private:
   Orchestrator();

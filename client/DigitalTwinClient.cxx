@@ -65,12 +65,13 @@ int main(int argc, char *argv[])
   // so it's heavliy dependent on that.
   // will need to rewrite this to work on my config
   orchestrator.ModelNetRegister();
-  model_net_register();
+  //model_net_register();
 
   // says this loads the config file and sets up the number of LPs on each PE
   // this is similar to the above, in that its dependent on lpconf
   // these two functions will be replaced by functionality in the orchestrator
-  codes_mapping_setup();
+  orchestrator.CodesMappingSetup();
+  //codes_mapping_setup();
 /*
   int num_nets;
   int *net_ids;

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <iostream>
 
+#define CODES_MAPPING_DEBUG 1
 namespace codes
 {
 namespace orchestrator
@@ -27,6 +28,11 @@ namespace orchestrator
 static void codesMappingInit()
 {
   Orchestrator::GetInstance().CodesMappingInit();
+}
+
+static tw_lp* codesMappingToLP(tw_lpid lpid)
+{
+  return Orchestrator::GetInstance().CodesMappingToLP(lpid);
 }
 
 Orchestrator* Orchestrator::Instance = nullptr;
@@ -124,11 +130,34 @@ void Orchestrator::CodesMappingSetup()
   // TODO will need to check on those functions
   g_tw_mapping=CUSTOM;
   g_tw_custom_initial_mapping=&codesMappingInit;
-  //g_tw_custom_lp_global_to_local_map=&codes_mapping_to_lp;
+  g_tw_custom_lp_global_to_local_map=&codesMappingToLP;
 
-  //// TODO need to add mem factor config
+  // TODO need to add mem factor config
+  int mem_factor = 1;
+  g_tw_events_per_pe = mem_factor * this->CodesMappingGetLPsForPE();
 
-  //g_tw_events_per_pe = codes_mapping_get_lps_for_pe();
+  const auto& simConfig = this->YAMLParser.GetSimulationConfig();
+
+  // we increment the number of RNGs used to let codes_local_latency use the
+  // last one
+  g_tw_nRNG_per_lp++;
+  g_tw_nRNG_per_lp++; //Congestion Control gets its own RNG - second to last (CLL is last)
+
+  tw_define_lps(this->CodesMappingGetLPsForPE(), simConfig.ROSSMessageSize);
+
+  // TODO ignoring the offset stuff for the RNG
+  // can add later if needed
+}
+
+int Orchestrator::CodesMappingGetLPsForPE()
+{
+  int rank;
+  // TODO fix MPI_COMM_WORLD refs
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#if CODES_MAPPING_DEBUG
+  printf("%d lps for rank %d\n", this->LPsPerPEFloor + (g_tw_mynode < this->LPsRemainder), rank);
+#endif
+  return this->LPsPerPEFloor + ((tw_lpid)g_tw_mynode < this->LPsRemainder);
 }
 
 void Orchestrator::LPTypeRegister(const std::string& name, const tw_lptype* type)
@@ -147,6 +176,9 @@ const tw_lptype* Orchestrator::LPTypeLookup(const std::string& name)
 
 void Orchestrator::CodesMappingInit()
 {
+  const auto& configIndices = this->YAMLParser.GetLPTypeConfigIndices();
+  const auto& lpConfigs = this->YAMLParser.GetLPTypeConfigs();
+
   /* have 16 kps per pe, this is the optimized configuration for ROSS custom mapping */
   for(tw_lpid kpid = 0; kpid < g_tw_nkp; kpid++)
   {
@@ -178,30 +210,33 @@ void Orchestrator::CodesMappingInit()
     // for now, we'll only do this for serial impls because we're working with
     // such small networks in phase I.
     // in phase II we can add some kind of graph partitioner so we can do parallel
-    //this->LPTypeLookup(lpTypeName);
+    std::string lpTypeName = lpConfigs[configIndices[ross_lid]].ModelName;
+    const tw_lptype* lptype = this->LPTypeLookup(lpTypeName);
 
-    //codes_mapping_get_lp_info(ross_gid, NULL, &grp_id, lp_type_name,
-    //    &lpt_id, NULL, &rep_id, &offset);
-
-
-
-//#if CODES_MAPPING_DEBUG
-//         printf("lp:%lu --> kp:%lu, pe:%llu\n", ross_gid, kpid, pe->id);
-//#endif
-//         lptype = lp_type_lookup(lp_type_name);
-//         if (lptype == NULL)
-//             tw_error(TW_LOC, "could not find LP with type name \"%s\", "
-//                     "did you forget to register the LP?\n", lp_type_name);
-//         else
-//             /* sorry, const... */
-//             tw_lp_settype(ross_lid, (tw_lptype*) lptype);
-//         if (g_st_ev_trace || g_st_model_stats || g_st_use_analysis_lps)
-//         {
-//             trace_type = st_model_type_lookup(lp_type_name);
-//             st_model_settype(ross_lid, (st_model_types*) trace_type);
-//         }
+#if CODES_MAPPING_DEBUG
+         printf("lp:%lu --> kp:%lu, pe:%llu\n", ross_gid, kpid, pe->id);
+#endif
+    if (!lptype)
+    {
+      tw_error(TW_LOC, "could not find LP with type name \"%s\", "
+              "did you forget to register the LP?\n", lpTypeName.c_str());
+    }
+    else
+    {
+      tw_lp_settype(ross_lid, (tw_lptype*) lptype);
     }
 
+    //TODO need to do the event tracing stuff
+  }
+
+}
+
+tw_lp* Orchestrator::CodesMappingToLP(tw_lpid lpid)
+{
+  int index = lpid - (g_tw_mynode * this->LPsPerPEFloor) -
+      std::min(static_cast<unsigned long long>(g_tw_mynode),
+               static_cast<unsigned long long>(this->LPsRemainder));
+  return g_tw_lp[index];
 }
 
 } // end namespace orchestrator

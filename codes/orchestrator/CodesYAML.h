@@ -37,6 +37,14 @@ struct LPTypeConfig
   std::vector<std::string> NodeNames;
 };
 
+struct SimulationConfig
+{
+  int PacketSize;
+  int ROSSMessageSize;
+  // TODO prob switch to enum?
+  std::string ModelNetScheduler;
+};
+
 //struct LPGroups
 //{
 //  // not necessary, just get Groups.size()
@@ -54,6 +62,7 @@ public:
 
   std::vector<LPTypeConfig>& GetLPTypeConfigs();
   std::vector<int>& GetLPTypeConfigIndices();
+  const SimulationConfig& GetSimulationConfig();
 
 private:
   std::string YamlString;
@@ -63,6 +72,8 @@ private:
   // this is an index into this->LPConfigs
   // this is an LPs local id mapped to its LP type
   std::vector<int> LPTypeConfigIndices;
+
+  SimulationConfig SimConfig;
 
   void RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex);
 };
