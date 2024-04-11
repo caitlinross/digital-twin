@@ -26,15 +26,6 @@ int mn_sample_enabled = 0;
 // issues...
 static int msg_offsets[MAX_NETS];
 
-typedef struct model_net_base_params_s {
-    model_net_sched_cfg_params sched_params;
-    uint64_t packet_size;
-    int num_queues;
-    int use_recv_queue;
-    tw_stime nic_seq_delay;
-    int node_copy_queues;
-} model_net_base_params;
-
 /* annotation-specific parameters (unannotated entry occurs at the
  * last index) */
 static int                       num_params = 0;
@@ -46,77 +37,6 @@ static tw_stime mn_sample_end = 0.0;
 static int servers_per_node_queue = -1;
 extern tw_stime codes_cn_delay;
 
-typedef struct model_net_base_state {
-    int net_id, nics_per_router;
-    // whether scheduler loop is running
-    int *in_sched_send_loop, in_sched_recv_loop;
-    // unique message id counter. This doesn't get decremented on RC to prevent
-    // optimistic orderings using "stale" ids
-    uint64_t msg_id;
-    // model-net schedulers
-    model_net_sched **sched_send, *sched_recv;
-    // parameters
-    const model_net_base_params * params;
-    // lp type and state of underlying model net method - cache here so we
-    // don't have to constantly look up
-    const tw_lptype *sub_type;
-    const st_model_types *sub_model_type;
-    void *sub_state;
-    tw_stime next_available_time;
-    tw_stime *node_copy_next_available_time;
-} model_net_base_state;
-
-
-/**** END SIMULATION DATA STRUCTURES ****/
-
-/**** BEGIN LP, EVENT PROCESSING FUNCTION DECLS ****/
-
-/* ROSS LP processing functions */
-static void model_net_base_lp_init(
-        model_net_base_state * ns,
-        tw_lp * lp);
-static void model_net_base_event(
-        model_net_base_state * ns,
-        tw_bf * b,
-        model_net_wrap_msg * m,
-        tw_lp * lp);
-static void model_net_base_event_rc(
-        model_net_base_state * ns,
-        tw_bf * b,
-        model_net_wrap_msg * m,
-        tw_lp * lp);
-static void model_net_base_finalize(
-        model_net_base_state * ns,
-        tw_lp * lp);
-
-/* event type handlers */
-static void handle_new_msg(
-        model_net_base_state * ns,
-        tw_bf *b,
-        model_net_wrap_msg * m,
-        tw_lp * lp);
-static void handle_sched_next(
-        model_net_base_state * ns,
-        tw_bf *b,
-        model_net_wrap_msg * m,
-        tw_lp * lp);
-static void handle_new_msg_rc(
-        model_net_base_state * ns,
-        tw_bf *b,
-        model_net_wrap_msg * m,
-        tw_lp * lp);
-static void handle_sched_next_rc(
-        model_net_base_state * ns,
-        tw_bf *b,
-        model_net_wrap_msg * m,
-        tw_lp * lp);
-static void model_net_commit_event(
-        model_net_base_state * ns,
-        tw_bf *b,
-        model_net_wrap_msg * m,
-        tw_lp * lp);
-
-/* ROSS function pointer table for this LP */
 tw_lptype model_net_base_lp = {
     (init_f) model_net_base_lp_init,
     (pre_run_f) NULL,
@@ -128,7 +48,11 @@ tw_lptype model_net_base_lp = {
     sizeof(model_net_base_state),
 };
 
-static void model_net_commit_event(model_net_base_state * ns, tw_bf *b,  model_net_wrap_msg * m, tw_lp * lp)
+/**** END SIMULATION DATA STRUCTURES ****/
+
+/**** BEGIN LP, EVENT PROCESSING FUNCTION DECLS ****/
+
+void model_net_commit_event(model_net_base_state * ns, tw_bf *b,  model_net_wrap_msg * m, tw_lp * lp)
 {
     if(m->h.event_type == MN_BASE_PASS)
     {

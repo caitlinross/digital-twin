@@ -19,6 +19,7 @@ extern "C" {
 
 #include <ross.h>
 
+#include "codes/mapping/codes-mapping.h"
 #include "codes/model-net/congestion-controller-core.h"
 #include "codes/model-net/lp-msg.h"
 #include "codes/model-net/model-net.h"
@@ -27,6 +28,107 @@ extern "C" {
 #include "codes/models/pdes/routers/simplep2p.h"
 
 extern int model_net_base_magic;
+
+typedef struct model_net_base_msg {
+    // no need for event type - in wrap message
+    model_net_request req;
+    int is_from_remote;
+    int isQueueReq;
+    tw_stime save_ts;
+    // parameters to pass to new messages (via model_net_set_msg_params)
+    // TODO: make this a union for multiple types of parameters
+    mn_sched_params sched_params;
+    model_net_sched_rc rc; // rc for scheduling events
+} model_net_base_msg;
+
+typedef struct model_net_wrap_msg {
+    msg_header h;
+    union {
+        model_net_base_msg      m_base;  // base lp
+        sn_message              m_snet;  // simplenet
+        sp_message              m_sp2p;  // simplep2p
+        congestion_control_message m_cc;
+        // add new ones here
+    } msg;
+} model_net_wrap_msg;
+
+typedef struct model_net_base_params_s {
+    model_net_sched_cfg_params sched_params;
+    uint64_t packet_size;
+    int num_queues;
+    int use_recv_queue;
+    tw_stime nic_seq_delay;
+    int node_copy_queues;
+} model_net_base_params;
+
+typedef struct model_net_base_state {
+    int net_id, nics_per_router;
+    // whether scheduler loop is running
+    int *in_sched_send_loop, in_sched_recv_loop;
+    // unique message id counter. This doesn't get decremented on RC to prevent
+    // optimistic orderings using "stale" ids
+    uint64_t msg_id;
+    // model-net schedulers
+    model_net_sched **sched_send, *sched_recv;
+    // parameters
+    const model_net_base_params * params;
+    // lp type and state of underlying model net method - cache here so we
+    // don't have to constantly look up
+    const tw_lptype *sub_type;
+    const st_model_types *sub_model_type;
+    void *sub_state;
+    tw_stime next_available_time;
+    tw_stime *node_copy_next_available_time;
+} model_net_base_state;
+
+
+/* ROSS LP processing functions */
+void model_net_base_lp_init(
+ model_net_base_state * ns,
+ tw_lp * lp);
+void model_net_base_event(
+ model_net_base_state * ns,
+ tw_bf * b,
+ model_net_wrap_msg * m,
+ tw_lp * lp);
+void model_net_base_event_rc(
+ model_net_base_state * ns,
+ tw_bf * b,
+ model_net_wrap_msg * m,
+ tw_lp * lp);
+void model_net_base_finalize(
+        model_net_base_state * ns,
+        tw_lp * lp);
+
+/* event type handlers */
+ void handle_new_msg(
+  model_net_base_state * ns,
+  tw_bf *b,
+  model_net_wrap_msg * m,
+  tw_lp * lp);
+ void handle_sched_next(
+  model_net_base_state * ns,
+  tw_bf *b,
+  model_net_wrap_msg * m,
+  tw_lp * lp);
+ void handle_new_msg_rc(
+  model_net_base_state * ns,
+  tw_bf *b,
+  model_net_wrap_msg * m,
+  tw_lp * lp);
+ void handle_sched_next_rc(
+  model_net_base_state * ns,
+  tw_bf *b,
+  model_net_wrap_msg * m,
+  tw_lp * lp);
+ void model_net_commit_event(
+        model_net_base_state * ns,
+        tw_bf *b,
+        model_net_wrap_msg * m,
+        tw_lp * lp);
+
+/* ROSS function pointer table for this LP */
+extern tw_lptype model_net_base_lp;
 
 // register the networks with ROSS, given the array of flags, one for each
 // network type
@@ -128,29 +230,6 @@ enum model_net_base_event_type {
     // message calls congestion request method on topology specific handler
     MN_CONGESTION_EVENT
 };
-
-typedef struct model_net_base_msg {
-    // no need for event type - in wrap message
-    model_net_request req;
-    int is_from_remote;
-    int isQueueReq;
-    tw_stime save_ts;
-    // parameters to pass to new messages (via model_net_set_msg_params)
-    // TODO: make this a union for multiple types of parameters
-    mn_sched_params sched_params;
-    model_net_sched_rc rc; // rc for scheduling events
-} model_net_base_msg;
-
-typedef struct model_net_wrap_msg {
-    msg_header h;
-    union {
-        model_net_base_msg      m_base;  // base lp
-        sn_message              m_snet;  // simplenet
-        sp_message              m_sp2p;  // simplep2p
-        congestion_control_message m_cc;
-        // add new ones here
-    } msg;
-} model_net_wrap_msg;
 
 #ifdef __cplusplus
 }

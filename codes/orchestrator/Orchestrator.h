@@ -14,8 +14,10 @@
 #include "codes/orchestrator/CodesYAML.h"
 
 #include <mpi.h>
+#include <ross.h>
 
 #include <string>
+#include <map>
 
 namespace codes
 {
@@ -48,6 +50,10 @@ public:
   // map LPs to PEs
   void CodesMappingSetup();
 
+  void CodesMappingInit();
+
+  void LPTypeRegister(const std::string& name, const tw_lptype* type);
+
 private:
   Orchestrator();
   Orchestrator(const Orchestrator&) = delete;
@@ -66,6 +72,18 @@ private:
   std::vector<int> ConfiguredNetworks;
   std::vector<LPConfig> LPConfigs;
 
+  tw_lpid LPsPerPEFloor;
+  tw_lpid LPsRemainder;
+
+  //struct LPNameMapping
+  //{
+  //  std::string Name;
+  //  const tw_lptype* LPType;
+  //};
+  //std::vector<LPNameMapping> LPNameMap;
+  std::map<std::string, const tw_lptype*> LPNameMap;
+
+  const tw_lptype* LPTypeLookup(const std::string& name);
 };
 
 } // end namespace orchestrator

@@ -9,23 +9,12 @@
 //============================================================================
 
 #include "codes/models/pdes/hosts/SimpleServer.h"
+#include "codes/util/CodesUtils.h"
 
 namespace
 {
 
 static int NETWORK_ID = 0;
-
-/* convert ns to seconds */
-tw_stime ns_to_s(tw_stime ns)
-{
-  return(ns / (1000.0 * 1000.0 * 1000.0));
-}
-
-/* convert seconds to ns */
-tw_stime s_to_ns(tw_stime ns)
-{
-  return(ns * (1000.0 * 1000.0 * 1000.0));
-}
 
 
 } // end anon namespace
@@ -87,6 +76,8 @@ tw_lptype SimpleServerLP = {
     sizeof(SimpleServerState),
 };
 
+// TODO have the Orchestrator be able to call this and you pass to it the lp name and
+// the tw_lptype struct
 void SimpleServerAddLPType()
 {
   lp_type_register("nw-lp", &SimpleServerLP);
@@ -179,7 +170,7 @@ void svr_finalize(
     SimpleServerState * ns,
     tw_lp * lp)
 {
-    double t = ns_to_s(tw_now(lp) - ns->start_ts);
+    double t = codes::NSToSeconds(tw_now(lp) - ns->start_ts);
     printf("server %llu recvd %d bytes in %f seconds, %f MiB/s sent_count %d recvd_count %d local_count %d \n", (unsigned long long)lp->gid, PAYLOAD_SZ*ns->msg_recvd_count, t,
         ((double)(PAYLOAD_SZ*NUM_REQS)/(double)(1024*1024)/t), ns->msg_sent_count, ns->msg_recvd_count, ns->local_recvd_count);
     return;

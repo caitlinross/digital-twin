@@ -16,12 +16,18 @@
 
 #include <ross.h>
 
+#include <algorithm>
 #include <iostream>
 
 namespace codes
 {
 namespace orchestrator
 {
+
+static void codesMappingInit()
+{
+  Orchestrator::GetInstance().CodesMappingInit();
+}
 
 Orchestrator* Orchestrator::Instance = nullptr;
 bool Orchestrator::Destroyed = false;
@@ -89,15 +95,20 @@ void Orchestrator::ModelNetRegister()
     for (int n = 0; n < MAX_NETS; n++)
     {
       if (!this->ConfiguredNetworks[n] && config.ModelName == model_net_lp_config_names[n])
- //             strcmp(model_net_lp_config_names[n], config.ModelName) == 0)
       {
         this->ConfiguredNetworks[n] = 1;
+        // TODO: this doesn't have the full functionality of model_net_base_register
+        // so model-net lps that have custom registration hooks aren't supported
+        // also the ROSS event tracing stuff needs to be handled
+        this->LPTypeRegister(config.ModelName, &model_net_base_lp);
         break;
       }
     }
   }
 
-  model_net_base_register(this->ConfiguredNetworks.data());
+  //model_net_base_register(this->ConfiguredNetworks.data());
+  // we actually do need to have our own version of this
+  // which is just called in the loop above
 }
 
 void Orchestrator::CodesMappingSetup()
@@ -109,18 +120,91 @@ void Orchestrator::CodesMappingSetup()
   {
     globalNumLPs += config.NodeNames.size();
   }
-  tw_lpid lpsPerPE = globalNumLPs;
-  tw_lpid lpsRemainder = lpsPerPE % numPEs;
-  lpsPerPE /= numPEs;
+  this->LPsPerPEFloor = globalNumLPs;
+  this->LPsRemainder = this->LPsPerPEFloor % numPEs;
+  this->LPsPerPEFloor /= numPEs;
 
   // TODO will need to check on those functions
-  //g_tw_mapping=CUSTOM;
-  //g_tw_custom_initial_mapping=&codes_mapping_init;
+  g_tw_mapping=CUSTOM;
+  g_tw_custom_initial_mapping=&codesMappingInit;
   //g_tw_custom_lp_global_to_local_map=&codes_mapping_to_lp;
 
   //// TODO need to add mem factor config
 
   //g_tw_events_per_pe = codes_mapping_get_lps_for_pe();
+}
+
+void Orchestrator::LPTypeRegister(const std::string& name, const tw_lptype* type)
+{
+  //LPNameMapping nameMap;
+  //nameMap.Name = name;
+  //nameMap.LPType = type;
+  //this->LPNameMap.push_back(nameMap);
+  this->LPNameMap[name] = type;
+}
+
+const tw_lptype* Orchestrator::LPTypeLookup(const std::string& name)
+{
+  return this->LPNameMap.count(name) ? this->LPNameMap[name] : nullptr;
+}
+
+void Orchestrator::CodesMappingInit()
+{
+  /* have 16 kps per pe, this is the optimized configuration for ROSS custom mapping */
+  for(tw_lpid kpid = 0; kpid < g_tw_nkp; kpid++)
+  {
+    tw_kp_onpe(kpid, g_tw_pe);
+  }
+
+  tw_lpid lp_start = g_tw_mynode * this->LPsPerPEFloor +
+    std::min(static_cast<unsigned long long>(g_tw_mynode),
+             static_cast<unsigned long long>(this->LPsRemainder));
+  tw_lpid lp_end = (g_tw_mynode + 1) * this->LPsPerPEFloor +
+    std::min(static_cast<unsigned long long>(g_tw_mynode + 1),
+             static_cast<unsigned long long>(this->LPsRemainder));
+
+  for (tw_lpid lpid = lp_start; lpid < lp_end; lpid++)
+  {
+    tw_lpid ross_gid = lpid;
+    tw_lpid ross_lid = lpid - lp_start;
+    tw_lpid kpid = ross_lid % g_tw_nkp;
+    tw_pe* pe = g_tw_pe;
+
+    tw_lp_onpe(ross_lid, pe, ross_gid);
+    tw_lp_onkp(g_tw_lp[ross_lid], g_tw_kp[kpid]);
+
+    // now we need to figure out for each lpid, what kind of lp is it
+    // so before we can go any further, we need to read in the DOT file to
+    // get the topology, because that will be used for the mapping
+    // that combined with the size of LPConfig->NodeNames, will help us to figure
+    // out the lp type name
+    // for now, we'll only do this for serial impls because we're working with
+    // such small networks in phase I.
+    // in phase II we can add some kind of graph partitioner so we can do parallel
+    //this->LPTypeLookup(lpTypeName);
+
+    //codes_mapping_get_lp_info(ross_gid, NULL, &grp_id, lp_type_name,
+    //    &lpt_id, NULL, &rep_id, &offset);
+
+
+
+//#if CODES_MAPPING_DEBUG
+//         printf("lp:%lu --> kp:%lu, pe:%llu\n", ross_gid, kpid, pe->id);
+//#endif
+//         lptype = lp_type_lookup(lp_type_name);
+//         if (lptype == NULL)
+//             tw_error(TW_LOC, "could not find LP with type name \"%s\", "
+//                     "did you forget to register the LP?\n", lp_type_name);
+//         else
+//             /* sorry, const... */
+//             tw_lp_settype(ross_lid, (tw_lptype*) lptype);
+//         if (g_st_ev_trace || g_st_model_stats || g_st_use_analysis_lps)
+//         {
+//             trace_type = st_model_type_lookup(lp_type_name);
+//             st_model_settype(ross_lid, (st_model_types*) trace_type);
+//         }
+    }
+
 }
 
 } // end namespace orchestrator
