@@ -56,10 +56,15 @@ void CodesYAML::ParseConfig(const std::string& configFile)
 
   ryml::ConstNodeRef root = tree.rootref();
 
-  this->LPConfigs.resize(root.num_children());
   int typeIndex = 0;
   for (ryml::ConstNodeRef const& child : root.children())
   {
+    if (child.has_key() && (child.key() == "simulation"
+                         || child.key() == "topology"
+                         || child.key() == "site"))
+    {
+      continue;
+    }
     this->RecurseConfig(child, typeIndex);
     typeIndex++;
   }
@@ -100,6 +105,11 @@ std::vector<int>& CodesYAML::GetLPTypeConfigIndices()
 
 void CodesYAML::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)
 {
+  while (lpTypeIndex >= this->LPConfigs.size())
+  {
+    this->LPConfigs.push_back(LPTypeConfig());
+  }
+
   auto& lpConfig = this->LPConfigs[lpTypeIndex];
   if (root.is_keyval())
   {

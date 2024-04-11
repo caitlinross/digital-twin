@@ -2,7 +2,7 @@
 # with one router connected to 2 hosts and the other connected to 3 hosts
 router_config0:
   type: router
-  model: simplep2p
+  model: modelnet_simplep2p
   node_ids: [router0, router1, router2]
 
 host_config0:
