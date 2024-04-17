@@ -29,11 +29,11 @@ set(srcs
   model-net/lp-io.c
   model-net/lp-msg.c
   model-net/lp-type-lookup.c
-  model-net/ModelNet.cxx
+  #model-net/ModelNet.cxx
   model-net/model-net-lp.c
   model-net/model-net-sched-impl.c
   model-net/model-net-sched.c
-  model-net/model-net.c
+  model-net/model-net.cxx
   model-net/simplenet-upd.c
 
 # models
@@ -80,7 +80,7 @@ set(headers
   model-net/lp-io.h
   model-net/lp-msg.h
   model-net/lp-type-lookup.h
-  model-net/ModelNet.h
+  #model-net/ModelNet.h
   model-net/model-net-lp.h
   model-net/model-net-method.h
   model-net/model-net-sched-impl.h

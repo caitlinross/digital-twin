@@ -7,23 +7,28 @@
 #include <assert.h>
 #include <string.h>
 
+#include <ross.h>
+
 #include "codes/mapping/codes-mapping.h"
 #include "codes/model-net/codes.h"
 #include "codes/model-net/model-net-lp.h"
 #include "codes/model-net/model-net-method.h"
 #include "codes/model-net/model-net-sched.h"
 #include "codes/model-net/model-net.h"
+#include "codes/orchestrator/Orchestrator.h"
+
+#include <vector>
 
 #define STR_SIZE 16
 #define PROC_TIME 10.0
 
 char g_nm_link_failure_filepath[MAX_NAME_LENGTH];
 
-#define X(a, b, c, d) b,
+#define X(a, b, c, d) (char*)b,
 char* model_net_lp_config_names[] = { NETWORK_DEF };
 #undef X
 
-#define X(a, b, c, d) c,
+#define X(a, b, c, d) (char*)c,
 char* model_net_method_names[] = { NETWORK_DEF };
 #undef X
 
@@ -81,22 +86,25 @@ void model_net_register()
 
 void model_net_register_yaml()
 {
+  auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
+  auto parser = orchestrator.GetYAMLParser();
   // first set up which networks need to be registered, then pass off to base
   // LP to do its thing
   memset(do_config_nets, 0, MAX_NETS * sizeof(*do_config_nets));
-  for (int grp = 0; grp < lpconf.lpgroups_count; grp++)
+  // So basically all we want to do here is check the lp types that are
+  // configured and for model-net layer LPs (so any routers/switches
+  // essentially), note which ones we are using then we need to call
+  // model_net_base_register to register them with ROSS. looks like we don't
+  // need to update anything there
+  auto& lpConfigs = parser->GetLPTypeConfigs();
+  for (const auto& config : lpConfigs)
   {
-    config_lpgroup_t* lpgroup = &lpconf.lpgroups[grp];
-    for (int lpt = 0; lpt < lpgroup->lptypes_count; lpt++)
+    for (int n = 0; n < MAX_NETS; n++)
     {
-      char const* nm = lpgroup->lptypes[lpt].name.ptr;
-      for (int n = 0; n < MAX_NETS; n++)
+      if (!do_config_nets[n] && strcmp(config.ModelName.c_str(), model_net_lp_config_names[n]) == 0)
       {
-        if (!do_config_nets[n] && strcmp(model_net_lp_config_names[n], nm) == 0)
-        {
-          do_config_nets[n] = 1;
-          break;
-        }
+        do_config_nets[n] = 1;
+        break;
       }
     }
   }
@@ -123,7 +131,7 @@ int* model_net_configure(int* id_count)
   }
 
   // allocate the output
-  int* ids = malloc(*id_count * sizeof(int));
+  int* ids = reinterpret_cast<int*>(malloc(*id_count * sizeof(int)));
   // read the ordering provided by modelnet_order
   char** values;
   size_t length;
@@ -364,7 +372,7 @@ static model_net_event_return model_net_event_impl_base(int net_id,
 
   tw_event* e = tw_event_new(src_mn_lp, poffset + offset, sender);
 
-  model_net_wrap_msg* m = tw_event_data(e);
+  model_net_wrap_msg* m = reinterpret_cast<model_net_wrap_msg*>(tw_event_data(e));
   msg_set_header(model_net_base_magic, MN_BASE_NEW_MSG, sender->gid, &m->h);
 
   // set the request struct

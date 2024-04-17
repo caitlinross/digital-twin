@@ -59,45 +59,45 @@ int main(int argc, char* argv[])
   // also this relies on a global variable lpconf from configuration.h
   // so it's heavliy dependent on that.
   // will need to rewrite this to work on my config
-  orchestrator.ModelNetRegister();
-  // model_net_register();
+  model_net_register_yaml();
 
   // says this loads the config file and sets up the number of LPs on each PE
   // this is similar to the above, in that its dependent on lpconf
   // these two functions will be replaced by functionality in the orchestrator
-  orchestrator.CodesMappingSetup();
-  // codes_mapping_setup();
+  /*
+    orchestrator.CodesMappingSetup();
+    // codes_mapping_setup();
 
-  int num_nets;
-  std::vector<int> net_ids;
-  // similar here, dependent on old configuration stuff
-  // configures all model-net lps and returns the set of network ids
-  // net_ids = model_net_configure(&num_nets);
-  net_ids = orchestrator.ModelNetConfigure(num_nets);
-  assert(num_nets == 1);
-  int net_id = net_ids[0];
-  SimpleServerSetNetId(net_id);
+    int num_nets;
+    std::vector<int> net_ids;
+    // similar here, dependent on old configuration stuff
+    // configures all model-net lps and returns the set of network ids
+    // net_ids = model_net_configure(&num_nets);
+    net_ids = orchestrator.ModelNetConfigure(num_nets);
+    assert(num_nets == 1);
+    int net_id = net_ids[0];
+    SimpleServerSetNetId(net_id);
 
-  // also depends on config globals
-  // int num_servers = codes_mapping_get_lp_count("MODELNET_GRP", 0, "nw-lp", NULL, 1);
-  // assert(num_servers == 3);
+    // also depends on config globals
+    // int num_servers = codes_mapping_get_lp_count("MODELNET_GRP", 0, "nw-lp", NULL, 1);
+    // assert(num_servers == 3);
 
-  lp_io_handle handle;
-  char name[15] = "modelnet-test\0";
-  if (lp_io_prepare(name, LP_IO_UNIQ_SUFFIX, &handle, MPI_COMM_WORLD) < 0)
-  {
-    return EXIT_FAILURE;
-  }
+    lp_io_handle handle;
+    char name[15] = "modelnet-test\0";
+    if (lp_io_prepare(name, LP_IO_UNIQ_SUFFIX, &handle, MPI_COMM_WORLD) < 0)
+    {
+      return EXIT_FAILURE;
+    }
 
-  tw_run();
-  model_net_report_stats(net_id);
+    tw_run();
+    model_net_report_stats(net_id);
 
-  if (lp_io_flush(handle, MPI_COMM_WORLD) < 0)
-  {
-    return (-1);
-  }
+    if (lp_io_flush(handle, MPI_COMM_WORLD) < 0)
+    {
+      return (-1);
+    }
 
-  tw_end();
-
+    tw_end();
+  */
   return EXIT_SUCCESS;
 }
