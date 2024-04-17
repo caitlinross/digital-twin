@@ -44,15 +44,17 @@ find_package(ryml REQUIRED)
 #pkg_check_modules(ROSS REQUIRED IMPORTED_TARGET ross)
 
 # MPI
-include(SetupMPI)
-if(MPI_C_FOUND)
+find_package(MPI REQUIRED)
+list(APPEND CODES_EXTERNAL_LIBS MPI::MPI_C)
+#include(SetupMPI)
+#if(MPI_C_FOUND)
         include_directories(${MPI_C_INCLUDE_PATH})
-        list(APPEND CODES_EXTERNAL_LIBS ${MPI_C_LIBRARIES})
-else(MPI_C_FOUND)
-        message("WARNING: Could not find MPI!")
-        message("         Either add an MPI compiler to your path (using modules)")
-        message("         Or force CMake to build using the correct compiler (`export CC=mpicc`)")
-endif(MPI_C_FOUND)
+#        list(APPEND CODES_EXTERNAL_LIBS ${MPI_C_LIBRARIES})
+#else(MPI_C_FOUND)
+#        message("WARNING: Could not find MPI!")
+#        message("         Either add an MPI compiler to your path (using modules)")
+#        message("         Or force CMake to build using the correct compiler (`export CC=mpicc`)")
+#endif(MPI_C_FOUND)
 
 
 ## DUMPI

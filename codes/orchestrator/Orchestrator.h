@@ -16,8 +16,8 @@
 #include <mpi.h>
 #include <ross.h>
 
-#include <string>
 #include <map>
+#include <string>
 
 namespace codes
 {
@@ -57,6 +57,12 @@ public:
 
   int CodesMappingGetLPsForPE();
 
+  void ModelNetBaseConfigure();
+
+  std::vector<int> ModelNetConfigure(int& id_count);
+
+  std::shared_ptr<CodesYAML> GetYAMLParser();
+
 private:
   Orchestrator();
   Orchestrator(const Orchestrator&) = delete;
@@ -77,17 +83,17 @@ private:
   tw_lpid LPsPerPEFloor;
   tw_lpid LPsRemainder;
 
-  //struct LPNameMapping
+  // struct LPNameMapping
   //{
-  //  std::string Name;
-  //  const tw_lptype* LPType;
-  //};
-  //std::vector<LPNameMapping> LPNameMap;
+  //   std::string Name;
+  //   const tw_lptype* LPType;
+  // };
+  // std::vector<LPNameMapping> LPNameMap;
   std::map<std::string, const tw_lptype*> LPNameMap;
 
   const tw_lptype* LPTypeLookup(const std::string& name);
 
-  CodesYAML YAMLParser;
+  std::shared_ptr<CodesYAML> YAMLParser;
 };
 
 } // end namespace orchestrator

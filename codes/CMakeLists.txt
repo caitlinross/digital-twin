@@ -29,6 +29,7 @@ set(srcs
   model-net/lp-io.c
   model-net/lp-msg.c
   model-net/lp-type-lookup.c
+  model-net/ModelNet.cxx
   model-net/model-net-lp.c
   model-net/model-net-sched-impl.c
   model-net/model-net-sched.c
@@ -56,6 +57,7 @@ set(srcs
 )
 
 set(headers
+  GlobalDefines.h
 # config
   config/config-file.h
   config/config-glue.h
@@ -78,6 +80,7 @@ set(headers
   model-net/lp-io.h
   model-net/lp-msg.h
   model-net/lp-type-lookup.h
+  model-net/ModelNet.h
   model-net/model-net-lp.h
   model-net/model-net-method.h
   model-net/model-net-sched-impl.h
