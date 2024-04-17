@@ -64,16 +64,15 @@ int main(int argc, char* argv[])
   // says this loads the config file and sets up the number of LPs on each PE
   // this is similar to the above, in that its dependent on lpconf
   // these two functions will be replaced by functionality in the orchestrator
-  /*
-    orchestrator.CodesMappingSetup();
-    // codes_mapping_setup();
+  codes_mapping_setup_yaml();
 
-    int num_nets;
-    std::vector<int> net_ids;
-    // similar here, dependent on old configuration stuff
-    // configures all model-net lps and returns the set of network ids
-    // net_ids = model_net_configure(&num_nets);
-    net_ids = orchestrator.ModelNetConfigure(num_nets);
+  int num_nets;
+  int* net_ids;
+  // similar here, dependent on old configuration stuff
+  // configures all model-net lps and returns the set of network ids
+  net_ids = model_net_configure_yaml(&num_nets);
+  // net_ids = orchestrator.ModelNetConfigure(num_nets);
+  /*
     assert(num_nets == 1);
     int net_id = net_ids[0];
     SimpleServerSetNetId(net_id);

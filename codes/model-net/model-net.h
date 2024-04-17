@@ -171,6 +171,7 @@ extern "C"
    * return - the set of network IDs, indexed in the order given by the
    * modelnet_order configuration parameter */
   int* model_net_configure(int* id_count);
+  int* model_net_configure_yaml(int* id_count);
 
   /* Sets up a sampling loop for model net events. The sampling data provided by
    * each modelnet lp is model-defined. This is a PE-wide setting. Data is sent

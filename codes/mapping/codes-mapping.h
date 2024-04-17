@@ -33,6 +33,7 @@ extern "C"
 
   /* loads the configuration file and sets up the number of LPs on each PE. */
   void codes_mapping_setup(void);
+  void codes_mapping_setup_yaml(void);
 
   /* set up lps with an RNG offset
    *
@@ -41,6 +42,7 @@ extern "C"
    * the global number of LPs
    */
   void codes_mapping_setup_with_seed_offset(int offset);
+  void codes_mapping_setup_with_seed_offset_yaml(int offset);
 
   /*Takes the group name and returns the number of repetitions in the group */
   int codes_mapping_get_group_reps(const char* group_name);
