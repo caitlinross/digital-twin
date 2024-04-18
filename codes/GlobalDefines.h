@@ -8,6 +8,9 @@
 //
 //============================================================================
 
+#ifndef GLOBAL_DEFINES_H
+#define GLOBAL_DEFINES_H
+
 // This is a temporary measure. currently codes contains a lot of global defines
 // and variables that are initialized all over the place. As part of the cleanup
 // we'll move them here until we get rid of the globals
@@ -23,3 +26,9 @@
   X(SIMPLEP2P, "modelnet_simplep2p", "simplep2p", &simplep2p_method)                               \
   X(CONGESTION_CONTROLLER, "congestion_controller", "congestion_controller", NULL)                 \
   X(MAX_NETS, NULL, NULL, NULL)
+
+// temporary to switch between the two config types.
+// one we can get rid of the old config completely, can remove this
+extern int UseYAMLConfig;
+
+#endif // !GLOBAL_DEFINES_H

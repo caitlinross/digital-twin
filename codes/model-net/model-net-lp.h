@@ -13,12 +13,12 @@
 #ifndef MODEL_NET_LP_H
 #define MODEL_NET_LP_H
 
+#include <ross.h>
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-#include <ross.h>
 
 #include "codes/mapping/codes-mapping.h"
 #include "codes/model-net/congestion-controller-core.h"

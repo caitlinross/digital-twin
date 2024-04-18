@@ -5,13 +5,16 @@
  */
 
 #include <assert.h>
+#include <cmath>
 #include <stddef.h>
 
+#include "codes/GlobalDefines.h"
 #include "codes/mapping/codes-mapping.h"
 #include "codes/model-net/model-net-lp.h"
 #include "codes/model-net/model-net-method.h"
 #include "codes/model-net/model-net-sched.h"
 #include "codes/model-net/model-net.h"
+#include "codes/orchestrator/Orchestrator.h"
 #include "codes/util/jenkins-hash.h"
 
 #define MN_NAME "model_net_base"
@@ -173,7 +176,7 @@ static void issue_sample_event(tw_lp* lp)
   if (tw_now(lp) + mn_sample_interval < mn_sample_end + 0.0001)
   {
     tw_event* e = tw_event_new(lp->gid, mn_sample_interval, lp);
-    model_net_wrap_msg* m = tw_event_data(e);
+    model_net_wrap_msg* m = reinterpret_cast<model_net_wrap_msg*>(tw_event_data(e));
     msg_set_header(model_net_base_magic, MN_BASE_SAMPLE, lp->gid, &m->h);
     tw_event_send(e);
   }
@@ -225,7 +228,7 @@ static void base_read_config(const char* anno, model_net_base_params* p)
     {
       if (strcmp(sched_names[i], sched) == 0)
       {
-        p->sched_params.type = i;
+        p->sched_params.type = static_cast<sched_type>(i);
         break;
       }
     }
@@ -297,7 +300,7 @@ static void base_read_config(const char* anno, model_net_base_params* p)
       {
         if (strcmp(sched_names[i], sched) == 0)
         {
-          *sub_stype = i;
+          *sub_stype = static_cast<sched_type>(i);
           break;
         }
       }
@@ -316,6 +319,134 @@ static void base_read_config(const char* anno, model_net_base_params* p)
       }
     }
   }
+
+  if (p->sched_params.type == MN_SCHED_FCFS_FULL ||
+      (p->sched_params.type == MN_SCHED_PRIO &&
+        p->sched_params.u.prio.sub_stype == MN_SCHED_FCFS_FULL))
+  {
+    // override packet size to something huge (leave a bit in the unlikely
+    // case that an op using packet size causes overflow)
+    packet_size = 1ull << 62;
+  }
+  else if (!packet_size && (p->sched_params.type != MN_SCHED_FCFS_FULL ||
+                             (p->sched_params.type == MN_SCHED_PRIO &&
+                               p->sched_params.u.prio.sub_stype != MN_SCHED_FCFS_FULL)))
+  {
+    packet_size = 512;
+    fprintf(stderr,
+      "WARNING, no packet size specified, setting packet "
+      "size to %llu\n",
+      LLU(packet_size));
+  }
+
+  p->packet_size = packet_size;
+}
+
+static void base_read_config_yaml(const char* anno, model_net_base_params* p)
+{
+  long int packet_size_l = 0;
+  uint64_t packet_size;
+
+  auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
+  auto parser = orchestrator.GetYAMLParser();
+  auto& simConfig = parser->GetSimulationConfig();
+  packet_size = simConfig.PacketSize;
+
+  if (!simConfig.ModelNetScheduler.empty())
+  {
+    int i;
+    for (i = 0; i < MAX_SCHEDS; i++)
+    {
+      if (sched_names[i] == simConfig.ModelNetScheduler)
+      {
+        p->sched_params.type = static_cast<sched_type>(i);
+        break;
+      }
+    }
+    if (i == MAX_SCHEDS)
+    {
+      tw_error(TW_LOC,
+        "Unknown value for PARAMS:modelnet-scheduler : "
+        "%s",
+        simConfig.ModelNetScheduler.c_str());
+    }
+  }
+  else
+  {
+    // default: FCFS
+    p->sched_params.type = MN_SCHED_FCFS;
+  }
+
+  // TODO: need to support the following config options
+  p->num_queues = 1;
+  if (!g_tw_mynode)
+  {
+    fprintf(stdout,
+      "NIC num injection port not specified, "
+      "setting to %d\n",
+      p->num_queues);
+  }
+
+  p->nic_seq_delay = 10;
+  if (!g_tw_mynode)
+  {
+    fprintf(stdout,
+      "NIC seq delay not specified, "
+      "setting to %lf\n",
+      p->nic_seq_delay);
+  }
+
+  p->node_copy_queues = 1;
+  if (!g_tw_mynode)
+  {
+    fprintf(stdout,
+      "NIC num copy queues not specified, "
+      "setting to %d\n",
+      p->node_copy_queues);
+  }
+
+  // get scheduler-specific parameters
+  // TODO:
+  // if (p->sched_params.type == MN_SCHED_PRIO)
+  // {
+  //   // prio scheduler uses default parameters
+  //   int* num_prios = &p->sched_params.u.prio.num_prios;
+  //   enum sched_type* sub_stype = &p->sched_params.u.prio.sub_stype;
+  //   // number of priorities to allocate
+  //   ret = configuration_get_value_int(&config, "PARAMS", "prio-sched-num-prios", anno,
+  //   num_prios); if (ret != 0)
+  //     *num_prios = 10;
+  //
+  //   ret = configuration_get_value(
+  //     &config, "PARAMS", "prio-sched-sub-sched", anno, sched, MAX_NAME_LENGTH);
+  //   if (ret <= 0)
+  //     *sub_stype = MN_SCHED_FCFS;
+  //   else
+  //   {
+  //     int i;
+  //     for (i = 0; i < MAX_SCHEDS; i++)
+  //     {
+  //       if (strcmp(sched_names[i], sched) == 0)
+  //       {
+  //         *sub_stype = static_cast<sched_type>(i);
+  //         break;
+  //       }
+  //     }
+  //     if (i == MAX_SCHEDS)
+  //     {
+  //       tw_error(TW_LOC,
+  //         "Unknown value for "
+  //         "PARAMS:prio-sched-sub-sched %s",
+  //         sched);
+  //     }
+  //     else if (i == MN_SCHED_PRIO)
+  //     {
+  //       tw_error(TW_LOC, "priority scheduler cannot be used as a "
+  //                        "priority scheduler's sub sched "
+  //                        "(PARAMS:prio-sched-sub-sched)");
+  //     }
+  //   }
+  // }
 
   if (p->sched_params.type == MN_SCHED_FCFS_FULL ||
       (p->sched_params.type == MN_SCHED_PRIO &&
@@ -406,21 +537,87 @@ void model_net_base_configure()
   }
 }
 
+void model_net_base_configure_yaml()
+{
+  uint32_t h1 = 0, h2 = 0;
+
+  bj_hashlittle2(MN_NAME, strlen(MN_NAME), &h1, &h2);
+  model_net_base_magic = h1 + h2;
+
+  // set up offsets - doesn't matter if they are actually used or not
+  msg_offsets[SIMPLENET] = offsetof(model_net_wrap_msg, msg.m_snet);
+  msg_offsets[SIMPLEP2P] = offsetof(model_net_wrap_msg, msg.m_sp2p);
+  msg_offsets[CONGESTION_CONTROLLER] = offsetof(model_net_wrap_msg, msg.m_cc);
+
+  // perform the configuration(s)
+  // This part is tricky, as we basically have to look up all annotations that
+  // have LP names of the form modelnet_*. For each of those, we need to read
+  // the base parameters
+  // - the init is a little easier as we can use the LP-id to look up the
+  // annotation
+  auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
+  auto parser = orchestrator.GetYAMLParser();
+  auto& simConfig = parser->GetSimulationConfig();
+  auto& lpConfigs = parser->GetLPTypeConfigs();
+
+  // first grab all of the annotations and store locally
+  // TODO: I'm not really sure about what the annotation stuff is
+  // but I think we need an entry in annos and all_params for each model net lp
+  for (int c = 0; c < lpConfigs.size(); c++)
+  {
+    const auto& lpConf = lpConfigs[c];
+    if (lpConf.ModelName.find("modelnet_") != std::string::npos)
+    {
+      // TODO: handle annotations
+      // we're just assuming they're all unannotated for now
+      // if (amap->has_unanno_lp)
+      {
+        int a;
+        for (a = 0; a < num_params; a++)
+        {
+          if (annos[a] == NULL)
+            break;
+        }
+        if (a == num_params)
+        {
+          // found a new (empty) annotation
+          annos[num_params++] = NULL;
+        }
+      }
+    }
+  }
+
+  // now that we have all of the annos for all of the networks, loop through
+  // and read the configs
+  for (int i = 0; i < num_params; i++)
+  {
+    base_read_config_yaml(annos[i], &all_params[i]);
+  }
+}
+
 void model_net_base_lp_init(model_net_base_state* ns, tw_lp* lp)
 {
   // obtain the underlying lp type through codes-mapping
   char lp_type_name[MAX_NAME_LENGTH], anno[MAX_NAME_LENGTH], group[MAX_NAME_LENGTH];
   int dummy;
 
-  codes_mapping_get_lp_info(lp->gid, group, &dummy, lp_type_name, &dummy, anno, &dummy, &dummy);
-
-  // get annotation-specific parameters
-  for (int i = 0; i < num_params; i++)
+  if (UseYAMLConfig)
   {
-    if ((anno[0] == '\0' && annos[i] == NULL) || strcmp(anno, annos[i]) == 0)
+    codes_mapping_get_lp_info_yaml(lp->gid, lp_type_name, &dummy, &dummy);
+    ns->params = &all_params[0];
+  }
+  else
+  {
+    codes_mapping_get_lp_info(lp->gid, group, &dummy, lp_type_name, &dummy, anno, &dummy, &dummy);
+
+    // get annotation-specific parameters
+    for (int i = 0; i < num_params; i++)
     {
-      ns->params = &all_params[i];
-      break;
+      if ((anno[0] == '\0' && annos[i] == NULL) || strcmp(anno, annos[i]) == 0)
+      {
+        ns->params = &all_params[i];
+        break;
+      }
     }
   }
 
@@ -434,7 +631,10 @@ void model_net_base_lp_init(model_net_base_state* ns, tw_lp* lp)
     }
   }
 
-  ns->nics_per_router = codes_mapping_get_lp_count(group, 1, lp_type_name, NULL, 1);
+  if (UseYAMLConfig)
+    ns->nics_per_router = codes_mapping_get_lp_count_yaml(lp_type_name);
+  else
+    ns->nics_per_router = codes_mapping_get_lp_count(group, 1, lp_type_name, NULL, 1);
 
   ns->msg_id = 0;
   ns->next_available_time = 0;
@@ -453,7 +653,7 @@ void model_net_base_lp_init(model_net_base_state* ns, tw_lp* lp)
     model_net_sched_init(&ns->params->sched_params, 0, method_array[ns->net_id], ns->sched_send[i]);
     ns->in_sched_send_loop[i] = 0;
   }
-  ns->sched_recv = malloc(sizeof(model_net_sched));
+  ns->sched_recv = reinterpret_cast<model_net_sched_s*>(malloc(sizeof(model_net_sched)));
   model_net_sched_init(&ns->params->sched_params, 1, method_array[ns->net_id], ns->sched_recv);
 
   ns->sub_type = model_net_get_lp_type(ns->net_id);
@@ -521,27 +721,35 @@ void model_net_base_event(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg
     case MN_BASE_SCHED_NEXT:
       handle_sched_next(ns, b, m, lp);
       break;
-    case MN_BASE_SAMPLE:;
+    case MN_BASE_SAMPLE:
+    {
       event_f sample = method_array[ns->net_id]->mn_sample_fn;
       assert(model_net_sampling_enabled() && sample != NULL);
       sub_msg = ((char*)m) + msg_offsets[ns->net_id];
       sample(ns->sub_state, b, sub_msg, lp);
       issue_sample_event(lp);
       break;
-    case MN_BASE_PASS:;
+    }
+    case MN_BASE_PASS:
+    {
       sub_msg = ((char*)m) + msg_offsets[ns->net_id];
       ns->sub_type->event(ns->sub_state, b, sub_msg, lp);
       break;
-    case MN_BASE_END_NOTIF:;
+    }
+    case MN_BASE_END_NOTIF:
+    {
       event_f end_ev = method_array[ns->net_id]->mn_end_notif_fn;
       end_ev(ns->sub_state, b, m, lp);
       break;
-    case MN_CONGESTION_EVENT:;
+    }
+    case MN_CONGESTION_EVENT:
+    {
       event_f con_ev = method_array[ns->net_id]->cc_congestion_event_fn;
       assert(g_congestion_control_enabled && con_ev != NULL);
       sub_msg = ((char*)m) + msg_offsets[CONGESTION_CONTROLLER];
       con_ev(ns->sub_state, b, sub_msg, lp);
       break;
+    }
     /* ... */
     default:
       assert(!"model_net_base event type not known");
@@ -563,25 +771,33 @@ void model_net_base_event_rc(model_net_base_state* ns, tw_bf* b, model_net_wrap_
       handle_sched_next_rc(ns, b, m, lp);
       break;
     case MN_BASE_SAMPLE:;
-      revent_f sample_rc = method_array[ns->net_id]->mn_sample_rc_fn;
-      assert(model_net_sampling_enabled() && sample_rc != NULL);
-      sub_msg = ((char*)m) + msg_offsets[ns->net_id];
-      sample_rc(ns->sub_state, b, sub_msg, lp);
-      break;
+      {
+        revent_f sample_rc = method_array[ns->net_id]->mn_sample_rc_fn;
+        assert(model_net_sampling_enabled() && sample_rc != NULL);
+        sub_msg = ((char*)m) + msg_offsets[ns->net_id];
+        sample_rc(ns->sub_state, b, sub_msg, lp);
+        break;
+      }
     case MN_BASE_PASS:;
-      sub_msg = ((char*)m) + msg_offsets[ns->net_id];
-      ns->sub_type->revent(ns->sub_state, b, sub_msg, lp);
-      break;
+      {
+        sub_msg = ((char*)m) + msg_offsets[ns->net_id];
+        ns->sub_type->revent(ns->sub_state, b, sub_msg, lp);
+        break;
+      }
     case MN_BASE_END_NOTIF:;
-      event_f end_ev_rc = method_array[ns->net_id]->mn_end_notif_rc_fn;
-      end_ev_rc(ns->sub_state, b, m, lp);
-      break;
+      {
+        event_f end_ev_rc = method_array[ns->net_id]->mn_end_notif_rc_fn;
+        end_ev_rc(ns->sub_state, b, m, lp);
+        break;
+      }
     case MN_CONGESTION_EVENT:;
-      revent_f con_ev_rc = method_array[ns->net_id]->cc_congestion_event_rc_fn;
-      assert(g_congestion_control_enabled && con_ev_rc != NULL);
-      sub_msg = ((char*)m) + msg_offsets[CONGESTION_CONTROLLER];
-      con_ev_rc(ns->sub_state, b, sub_msg, lp);
-      break;
+      {
+        revent_f con_ev_rc = method_array[ns->net_id]->cc_congestion_event_rc_fn;
+        assert(g_congestion_control_enabled && con_ev_rc != NULL);
+        sub_msg = ((char*)m) + msg_offsets[CONGESTION_CONTROLLER];
+        con_ev_rc(ns->sub_state, b, sub_msg, lp);
+        break;
+      }
     /* ... */
     default:
       assert(!"model_net_base event type not known");
@@ -675,7 +891,7 @@ void handle_new_msg(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg* m, t
     exp_time += ns->params->nic_seq_delay + codes_local_latency(lp);
     ns->next_available_time = exp_time;
     tw_event* e = tw_event_new(lp->gid, exp_time - tw_now(lp), lp);
-    model_net_wrap_msg* m_new = tw_event_data(e);
+    model_net_wrap_msg* m_new = reinterpret_cast<model_net_wrap_msg*>(tw_event_data(e));
     memcpy(m_new, m, sizeof(model_net_wrap_msg));
     void* e_msg = (m + 1);
     void* e_new_msg = (m_new + 1);
@@ -838,7 +1054,7 @@ void handle_sched_next(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg* m
   else if (ns->net_id == SIMPLEP2P)
   {
     tw_event* e = tw_event_new(lp->gid, poffset + codes_local_latency(lp), lp);
-    model_net_wrap_msg* m_wrap = tw_event_data(e);
+    model_net_wrap_msg* m_wrap = reinterpret_cast<model_net_wrap_msg*>(tw_event_data(e));
     model_net_request* r_wrap = &m_wrap->msg.m_base.req;
     msg_set_header(model_net_base_magic, MN_BASE_SCHED_NEXT, lp->gid, &m_wrap->h);
     m_wrap->msg.m_base.is_from_remote = is_from_remote;
@@ -873,7 +1089,7 @@ tw_event* model_net_method_event_new(tw_lpid dest_gid, tw_stime offset_ts, tw_lp
   int net_id, void** msg_data, void** extra_data)
 {
   tw_event* e = tw_event_new(dest_gid, offset_ts, sender);
-  model_net_wrap_msg* m_wrap = tw_event_data(e);
+  model_net_wrap_msg* m_wrap = reinterpret_cast<model_net_wrap_msg*>(tw_event_data(e));
   msg_set_header(model_net_base_magic, MN_BASE_PASS, sender->gid, &m_wrap->h);
   *msg_data = ((char*)m_wrap) + msg_offsets[net_id];
   // extra_data is optional
@@ -891,7 +1107,7 @@ void model_net_method_send_msg_recv_event(tw_lpid final_dest_lp, tw_lpid dest_mn
   tw_lp* sender)
 {
   tw_event* e = tw_event_new(dest_mn_lp, offset + codes_local_latency(sender), sender);
-  model_net_wrap_msg* m = tw_event_data(e);
+  model_net_wrap_msg* m = reinterpret_cast<model_net_wrap_msg*>(tw_event_data(e));
   msg_set_header(model_net_base_magic, MN_BASE_NEW_MSG, sender->gid, &m->h);
 
   if (sched_params != NULL)
@@ -940,7 +1156,7 @@ void model_net_method_idle_event2(
   tw_stime offset_ts, int is_recv_queue, int queue_offset, tw_lp* lp)
 {
   tw_event* e = tw_event_new(lp->gid, offset_ts, lp);
-  model_net_wrap_msg* m_wrap = tw_event_data(e);
+  model_net_wrap_msg* m_wrap = reinterpret_cast<model_net_wrap_msg*>(tw_event_data(e));
   model_net_request* r_wrap = &m_wrap->msg.m_base.req;
 #if DEBUG
   printf("%llu handle_sched_next() from model_net_method_idle_event2()\n", LLU(tw_now(lp)));
@@ -994,7 +1210,7 @@ int model_net_method_end_sim_broadcast(tw_stime offset_ts, tw_lp* sender)
 tw_event* model_net_method_end_sim_notification(tw_lpid dest_gid, tw_stime offset_ts, tw_lp* sender)
 {
   tw_event* e = tw_event_new(dest_gid, offset_ts, sender);
-  model_net_wrap_msg* m_wrap = tw_event_data(e);
+  model_net_wrap_msg* m_wrap = reinterpret_cast<model_net_wrap_msg*>(tw_event_data(e));
   msg_set_header(model_net_base_magic, MN_BASE_END_NOTIF, sender->gid, &m_wrap->h);
   return e;
 }
@@ -1003,7 +1219,7 @@ tw_event* model_net_method_congestion_event(
   tw_lpid dest_gid, tw_stime offset_ts, tw_lp* sender, void** msg_data, void** extra_data)
 {
   tw_event* e = tw_event_new(dest_gid, offset_ts, sender);
-  model_net_wrap_msg* m_wrap = tw_event_data(e);
+  model_net_wrap_msg* m_wrap = reinterpret_cast<model_net_wrap_msg*>(tw_event_data(e));
   msg_set_header(model_net_base_magic, MN_CONGESTION_EVENT, sender->gid, &m_wrap->h);
   *msg_data = ((char*)m_wrap) + msg_offsets[CONGESTION_CONTROLLER];
   // extra_data is optional

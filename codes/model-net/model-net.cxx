@@ -211,6 +211,96 @@ int* model_net_configure(int* id_count)
   return ids;
 }
 
+int* model_net_configure_yaml(int* id_count)
+{
+  // first call the base LP configure, which sets up the general parameters
+  model_net_base_configure_yaml();
+
+  // do network-specific configures
+  *id_count = 0;
+  for (int i = 0; i < MAX_NETS; i++)
+  {
+    if (do_config_nets[i])
+    {
+      // some don't need configuration (dragonfly router is covered by
+      // dragonfly)
+      if (method_array[i]->mn_configure != NULL)
+        method_array[i]->mn_configure();
+      (*id_count)++;
+    }
+  }
+
+  // allocate the output
+  int* ids = reinterpret_cast<int*>(malloc(*id_count * sizeof(int)));
+  // read the ordering provided by modelnet_order
+  // TODO: impl this
+  std::vector<std::string> values{ "simplep2p" };
+  if (values.size() != (size_t)*id_count)
+  {
+    tw_error(TW_LOC, "number of networks in PARAMS:modelnet_order "
+                     "do not match number in LPGROUPS\n");
+  }
+  // set the index
+  for (int i = 0; i < *id_count; i++)
+  {
+    ids[i] = -1;
+    for (int n = 0; n < MAX_NETS; n++)
+    {
+      if (values[i] == model_net_method_names[n])
+      {
+        if (!do_config_nets[n])
+        {
+          tw_error(TW_LOC,
+            "network in PARAMS:modelnet_order not "
+            "present in LPGROUPS: %s\n",
+            values[i].c_str());
+        }
+        ids[i] = n;
+        break;
+      }
+    }
+    if (ids[i] == -1)
+    {
+      tw_error(TW_LOC, "unknown network in PARAMS:modelnet_order: %s\n", values[i].c_str());
+    }
+  }
+
+  // init the per-msg params here
+  memset(is_msg_params_set, 0, MAX_MN_MSG_PARAM_TYPES * sizeof(*is_msg_params_set));
+
+  if (!g_tw_mynode)
+  {
+    fprintf(stderr,
+      "Bandwidth of compute node channels not specified, "
+      "setting to %lf\n",
+      cn_bandwidth);
+  }
+
+  codes_cn_delay = 1 / cn_bandwidth;
+  if (!g_tw_mynode)
+  {
+    printf("within node transfer per byte delay is %f\n", codes_cn_delay);
+  }
+
+  if (!g_tw_mynode)
+  {
+    fprintf(stderr,
+      "Within-node eager limit (node_eager_limit) not specified, "
+      "setting to %d\n",
+      codes_node_eager_limit);
+  }
+
+  // ret =
+  //   configuration_get_value_int(&config, "PARAMS", "codes_noop_bypass", NULL,
+  //   &codes_noop_bypass);
+  // if (!ret && !g_tw_mynode)
+  //{
+  //   printf("CODES No-op method bypass enabled\n");
+  // }
+
+  return ids;
+}
+
 int model_net_get_id(char* name)
 {
   int i;

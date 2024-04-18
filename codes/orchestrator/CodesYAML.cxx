@@ -11,25 +11,20 @@
 #include "codes/orchestrator/CodesYAML.h"
 #include "codes/orchestrator/GraphVizConfig.h"
 
+#include <c4/std/string.hpp>
 #include <ryml.hpp>
 #include <ryml_std.hpp>
-#include <c4/std/string.hpp>
 
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
-#include <sstream>
 
 namespace codes
 {
 namespace orchestrator
 {
 
-CodesYAML::CodesYAML()
-{
-
-
-}
+CodesYAML::CodesYAML() {}
 
 void CodesYAML::ParseConfig(const std::string& configFile)
 {
@@ -38,7 +33,8 @@ void CodesYAML::ParseConfig(const std::string& configFile)
   {
     std::cout << "the config file " << configFile << " does not exist!" << std::endl;
   }
-  this->DOTFileName = yamlPath.parent_path();
+  this->ParentDir = yamlPath.parent_path();
+  this->DOTFileName = this->ParentDir;
   this->DOTFileName += "/";
 
   std::ifstream ifs(configFile, std::ifstream::in);
@@ -49,7 +45,7 @@ void CodesYAML::ParseConfig(const std::string& configFile)
   std::string yaml(length, ' ');
   ifs.read(&yaml[0], yaml.size());
   ifs.close();
-  //std::cout << "yaml:\n" << yaml << std::endl;
+  // std::cout << "yaml:\n" << yaml << std::endl;
 
   // start parsing the file
   ryml::Tree tree = ryml::parse_in_arena(ryml::to_csubstr(yaml));
@@ -59,9 +55,8 @@ void CodesYAML::ParseConfig(const std::string& configFile)
   int typeIndex = 0;
   for (ryml::ConstNodeRef const& child : root.children())
   {
-    if (child.has_key() && (child.key() == "simulation"
-                         || child.key() == "topology"
-                         || child.key() == "site"))
+    if (child.has_key() &&
+        (child.key() == "simulation" || child.key() == "topology" || child.key() == "site"))
     {
       continue;
     }
@@ -85,7 +80,6 @@ void CodesYAML::ParseConfig(const std::string& configFile)
         std::cout << "DOT File: " << this->DOTFileName << std::endl;
       }
     }
-
   }
 
   // handle the simulation config section
@@ -113,13 +107,24 @@ void CodesYAML::ParseConfig(const std::string& configFile)
         auto parseSuccessful = ryml::atoi(child.val(), &this->SimConfig.ROSSMessageSize);
         // TODO error checking/defaults
       }
+      else if (child.key() == "net_latency_ns_file")
+      {
+        this->SimConfig.LatencyFileName = std::string(child.val().str, child.val().len);
+      }
+      else if (child.key() == "net_bw_mbps_file")
+      {
+        this->SimConfig.BandwidthFileName = std::string(child.val().str, child.val().len);
+      }
     }
   }
 
-
   GraphVizConfig config;
   config.ParseConfig(this->DOTFileName);
+}
 
+std::string CodesYAML::GetParentPath()
+{
+  return this->ParentDir;
 }
 
 std::vector<LPTypeConfig>& CodesYAML::GetLPTypeConfigs()

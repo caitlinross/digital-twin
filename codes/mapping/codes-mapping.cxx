@@ -8,11 +8,16 @@
  * CODES custom mapping file for ROSS
  */
 #include "codes/mapping/codes-mapping.h"
+#include "codes/GlobalDefines.h"
 #include "codes/model-net/codes.h"
 #include "codes/model-net/congestion-controller-core.h"
 #include "codes/orchestrator/Orchestrator.h"
 
+#include <iostream>
+
 #define CODES_MAPPING_DEBUG 1
+
+int UseYAMLConfig = 0;
 
 /* number of LPs assigned to the current PE (abstraction of MPI rank).
  * for lp counts which are not divisible by the number of ranks, keep
@@ -120,6 +125,25 @@ int codes_mapping_get_lpgroups_lp_count()
     }
   }
   return total_count;
+}
+
+int codes_mapping_get_lp_count_yaml(const char* lp_type_name)
+{
+  // TODO: will probably get more complicated once we figure out how to refer
+  // to different types of ML models? or maybe the ML model doesn't actually matter here,
+  // we just need to know the number of LPs of this type regardless of what ML model they're using
+  int count = 0;
+  auto parser = codes::orchestrator::Orchestrator::GetInstance().GetYAMLParser();
+  const auto& lpConfigs = parser->GetLPTypeConfigs();
+  for (const auto& conf : lpConfigs)
+  {
+    if (conf.ModelName == lp_type_name)
+    {
+      count += conf.NodeNames.size();
+    }
+  }
+  std::cout << "num of " << lp_type_name << " lps: " << count << std::endl;
+  return count;
 }
 
 int codes_mapping_get_lp_count(const char* group_name, int ignore_repetitions,
@@ -379,6 +403,19 @@ NOT_FOUND:
     relative_id, group_name == NULL ? "(all)" : group_name, lp_type_name,
     annotation_wise ? annotation : "(all)");
   return 0; // dummy return
+}
+
+void codes_mapping_get_lp_info_yaml(
+  tw_lpid gid, char* lp_type_name, int* lp_type_index, int* offset)
+
+{
+  auto parser = codes::orchestrator::Orchestrator::GetInstance().GetYAMLParser();
+  const auto& lpConfigs = parser->GetLPTypeConfigs();
+  const auto& lpTypeIndices = parser->GetLPTypeConfigIndices();
+
+  const auto& lpConf = lpConfigs[lpTypeIndices[gid]];
+  strncpy(lp_type_name, lpConf.ModelName.c_str(), lpConf.ModelName.size());
+  // TODO: do we really need offset or lp_type_index?
 }
 
 void codes_mapping_get_lp_info(tw_lpid gid, char* group_name, int* group_index, char* lp_type_name,

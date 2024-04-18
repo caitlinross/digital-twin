@@ -11,6 +11,7 @@
 #include <mpi.h>
 #include <ross.h>
 
+#include <codes/GlobalDefines.h>
 #include <codes/config/configuration.h>
 #include <codes/model-net/lp-io.h>
 #include <codes/models/pdes/hosts/SimpleServer.h>
@@ -32,6 +33,7 @@ const tw_optdef AppOptions[] = { TWOPT_GROUP("CODES Digital Twin"),
 // code for every new type of simulation they want to do
 int main(int argc, char* argv[])
 {
+  UseYAMLConfig = 1;
   tw_opt_add(AppOptions);
   tw_init(&argc, &argv);
 
@@ -72,31 +74,30 @@ int main(int argc, char* argv[])
   // configures all model-net lps and returns the set of network ids
   net_ids = model_net_configure_yaml(&num_nets);
   // net_ids = orchestrator.ModelNetConfigure(num_nets);
-  /*
-    assert(num_nets == 1);
-    int net_id = net_ids[0];
-    SimpleServerSetNetId(net_id);
+  assert(num_nets == 1);
+  int net_id = net_ids[0];
+  SimpleServerSetNetId(net_id);
 
-    // also depends on config globals
-    // int num_servers = codes_mapping_get_lp_count("MODELNET_GRP", 0, "nw-lp", NULL, 1);
-    // assert(num_servers == 3);
+  // also depends on config globals
+  int num_servers = codes_mapping_get_lp_count_yaml("SimpleServer");
+  assert(num_servers == 3);
 
-    lp_io_handle handle;
-    char name[15] = "modelnet-test\0";
-    if (lp_io_prepare(name, LP_IO_UNIQ_SUFFIX, &handle, MPI_COMM_WORLD) < 0)
-    {
-      return EXIT_FAILURE;
-    }
+  lp_io_handle handle;
+  char name[15] = "modelnet-test\0";
+  if (lp_io_prepare(name, LP_IO_UNIQ_SUFFIX, &handle, MPI_COMM_WORLD) < 0)
+  {
+    return EXIT_FAILURE;
+  }
 
-    tw_run();
-    model_net_report_stats(net_id);
+  tw_run();
+  model_net_report_stats(net_id);
 
-    if (lp_io_flush(handle, MPI_COMM_WORLD) < 0)
-    {
-      return (-1);
-    }
+  if (lp_io_flush(handle, MPI_COMM_WORLD) < 0)
+  {
+    return (-1);
+  }
 
-    tw_end();
-  */
+  tw_end();
+
   return EXIT_SUCCESS;
 }

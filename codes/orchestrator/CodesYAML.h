@@ -43,15 +43,17 @@ struct SimulationConfig
   int ROSSMessageSize;
   // TODO prob switch to enum?
   std::string ModelNetScheduler;
+  std::string LatencyFileName;
+  std::string BandwidthFileName;
 };
 
-//struct LPGroups
+// struct LPGroups
 //{
-//  // not necessary, just get Groups.size()
-//  //int NumLPGroups;
-//  int NumUniqueLPTypes;
-//  std::vector<LPGroup> Groups;
-//};
+//   // not necessary, just get Groups.size()
+//   //int NumLPGroups;
+//   int NumUniqueLPTypes;
+//   std::vector<LPGroup> Groups;
+// };
 
 class CodesYAML
 {
@@ -59,6 +61,8 @@ public:
   CodesYAML();
 
   void ParseConfig(const std::string& configFile);
+
+  std::string GetParentPath();
 
   std::vector<LPTypeConfig>& GetLPTypeConfigs();
   std::vector<int>& GetLPTypeConfigIndices();
@@ -74,6 +78,8 @@ private:
   std::vector<int> LPTypeConfigIndices;
 
   SimulationConfig SimConfig;
+
+  std::string ParentDir;
 
   void RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex);
 };

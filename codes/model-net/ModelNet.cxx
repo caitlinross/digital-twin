@@ -29,7 +29,6 @@ std::vector<std::string> MethodNames = { NETWORK_DEF };
 struct model_net_method* MethodArray[] = { NETWORK_DEF };
 #undef X
 
-
 ModelNet* ModelNet::Instance = nullptr;
 bool ModelNet::Destroyed = false;
 
@@ -89,7 +88,6 @@ void ModelNet::Register()
       }
     }
   }
-
 }
 
 void ModelNet::BaseConfigure()
@@ -237,7 +235,6 @@ std::vector<int> ModelNet::Configure(int& id_count)
   }
 
   return ids;
-
 }
 
 int ModelNet::GetId(const std::string& net_name)
@@ -254,9 +251,8 @@ int ModelNet::GetId(const std::string& net_name)
 
 }
 
-
-void mn_event_collective(int net_id, char const* category, int message_size,
-  int remote_event_size, void const* remote_event, tw_lp* sender)
+void mn_event_collective(int net_id, char const* category, int message_size, int remote_event_size,
+  void const* remote_event, tw_lp* sender)
 {
   if (net_id < 0 || net_id > MAX_NETS)
   {
@@ -266,7 +262,6 @@ void mn_event_collective(int net_id, char const* category, int message_size,
   }
   return codes::MethodArray[net_id]->mn_collective_call(
     category, message_size, remote_event_size, remote_event, sender);
-
 }
 
 void mn_event_collective_rc(int net_id, int message_size, tw_lp* sender)
@@ -278,5 +273,4 @@ void mn_event_collective_rc(int net_id, int message_size, tw_lp* sender)
     exit(-1);
   }
   return codes::MethodArray[net_id]->mn_collective_call_rc(message_size, sender);
-
 }

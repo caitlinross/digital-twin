@@ -7,37 +7,43 @@
 #ifndef SIMPLEP2P_H
 #define SIMPLEP2P_H
 
+#include "codes/model-net/model-net.h"
+#include <ross.h>
+
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-typedef struct sp_message sp_message;
+  typedef struct sp_message sp_message;
 
-enum sp_event_type 
-{
-    SP_MSG_READY = 1,  /* sender has transmitted msg to receiver */
-    SP_MSG_START,      /* initiate a transmission */
-};
+  enum sp_event_type
+  {
+    SP_MSG_READY = 1, /* sender has transmitted msg to receiver */
+    SP_MSG_START,     /* initiate a transmission */
+  };
 
-struct sp_message
-{
+  struct sp_message
+  {
     int magic; /* magic number */
     enum sp_event_type event_type;
-    tw_lpid src_gid; /* who transmitted this msg? */
-    tw_lpid src_mn_lp; // src modelnet id, provided by sender
+    tw_lpid src_gid;        /* who transmitted this msg? */
+    tw_lpid src_mn_lp;      // src modelnet id, provided by sender
     tw_lpid final_dest_gid; /* who is eventually targetted with this msg? */
-    tw_lpid dest_mn_lp; // destination modelnet id, provided by sender
+    tw_lpid dest_mn_lp;     // destination modelnet id, provided by sender
     /* relative ID of the sending simplep2p message (for latency/bandwidth lookup) */
     int src_mn_rel_id;
-    int dest_mn_rel_id; /* included to make rc easier */
-    uint64_t net_msg_size_bytes;     /* size of modeled network message */
-    int event_size_bytes;     /* size of simulator event message that will be tunnelled to destination */
-    int local_event_size_bytes;     /* size of simulator event message that delivered locally upon local completion */
+    int dest_mn_rel_id;          /* included to make rc easier */
+    uint64_t net_msg_size_bytes; /* size of modeled network message */
+    int
+      event_size_bytes; /* size of simulator event message that will be tunnelled to destination */
+    int local_event_size_bytes; /* size of simulator event message that delivered locally upon local
+                                   completion */
     char category[CATEGORY_NAME_MAX]; /* category for communication */
-    
+
     model_net_event_return event_rc;
     int is_pull;
-    uint64_t pull_size; 
+    uint64_t pull_size;
 
     /* for reverse computation */
     // TODO: clean up
@@ -49,7 +55,7 @@ struct sp_message
     tw_stime send_prev_idle_all_saved;
     tw_stime recv_next_idle_all_saved;
     tw_stime recv_prev_idle_all_saved;
-};
+  };
 
 #ifdef __cplusplus
 }
@@ -65,4 +71,3 @@ struct sp_message
  *
  * vim: ft=c ts=8 sts=4 sw=4 expandtab
  */
-

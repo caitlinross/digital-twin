@@ -68,6 +68,7 @@ extern "C"
    */
   int codes_mapping_get_lp_count(const char* group_name, int ignore_repetitions,
     const char* lp_type_name, const char* annotation, int ignore_annos);
+  int codes_mapping_get_lp_count_yaml(const char* lp_type_name);
 
   /* Calculates the global LP ID given config identifying info.
    *
@@ -131,6 +132,8 @@ extern "C"
    */
   void codes_mapping_get_lp_info(tw_lpid gid, char* group_name, int* group_index,
     char* lp_type_name, int* lp_type_index, char* annotation, int* rep_id, int* offset);
+  void codes_mapping_get_lp_info_yaml(
+    tw_lpid gid, char* lp_type_name, int* lp_type_index, int* offset);
 
   /* same end result as codes_mapping_get_lp_info, except:
    * - uses pointer-to-const instead of copying to output parameters.
@@ -181,6 +184,7 @@ extern "C"
    * lp_name - lp name as used in the configuration
    */
   const config_anno_map_t* codes_mapping_get_lp_anno_map(const char* lp_name);
+  const config_anno_map_t* codes_mapping_get_lp_anno_map_yaml(const char* lp_name);
 
   /* the following functions are meant to aide in transferring LP mapping
    * information across PEs - basically, a canonical mapping of names (group,

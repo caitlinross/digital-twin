@@ -30,7 +30,7 @@ set(srcs
   model-net/lp-msg.c
   model-net/lp-type-lookup.c
   #model-net/ModelNet.cxx
-  model-net/model-net-lp.c
+  model-net/model-net-lp.cxx
   model-net/model-net-sched-impl.c
   model-net/model-net-sched.c
   model-net/model-net.cxx
@@ -38,7 +38,7 @@ set(srcs
 
 # models
   models/pdes/hosts/SimpleServer.cxx
-  models/pdes/routers/simplep2p.c
+  models/pdes/routers/simplep2p.cxx
 
 # orchestrator
   orchestrator/CodesYAML.cxx
