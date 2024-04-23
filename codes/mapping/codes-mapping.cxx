@@ -129,25 +129,6 @@ int codes_mapping_get_lpgroups_lp_count()
   return total_count;
 }
 
-int codes_mapping_get_lp_count_yaml(const char* lp_type_name)
-{
-  // TODO: will probably get more complicated once we figure out how to refer
-  // to different types of ML models? or maybe the ML model doesn't actually matter here,
-  // we just need to know the number of LPs of this type regardless of what ML model they're using
-  int count = 0;
-  auto parser = codes::orchestrator::Orchestrator::GetInstance().GetYAMLParser();
-  const auto& lpConfigs = parser->GetLPTypeConfigs();
-  for (const auto& conf : lpConfigs)
-  {
-    if (conf.ModelName == lp_type_name)
-    {
-      count += conf.NodeNames.size();
-    }
-  }
-  std::cout << "num of " << lp_type_name << " lps: " << count << std::endl;
-  return count;
-}
-
 int codes_mapping_get_lp_count(const char* group_name, int ignore_repetitions,
   const char* lp_type_name, const char* annotation, int ignore_annos)
 {
@@ -407,19 +388,6 @@ NOT_FOUND:
   return 0; // dummy return
 }
 
-void codes_mapping_get_lp_info_yaml(
-  tw_lpid gid, char* lp_type_name, int* lp_type_index, int* offset)
-
-{
-  auto parser = codes::orchestrator::Orchestrator::GetInstance().GetYAMLParser();
-  const auto& lpConfigs = parser->GetLPTypeConfigs();
-  const auto& lpTypeIndices = parser->GetLPTypeConfigIndices();
-
-  const auto& lpConf = lpConfigs[lpTypeIndices[gid]];
-  strncpy(lp_type_name, lpConf.ModelName.c_str(), lpConf.ModelName.size());
-  // TODO: do we really need offset or lp_type_index?
-}
-
 void codes_mapping_get_lp_info(tw_lpid gid, char* group_name, int* group_index, char* lp_type_name,
   int* lp_type_index, char* annotation, int* rep_id, int* offset)
 {
@@ -587,63 +555,6 @@ static void codes_mapping_init(void)
   return;
 }
 
-static void codes_mapping_init_yaml(void)
-{
-  int grp_id, lpt_id, rep_id, offset;
-  tw_lpid ross_gid, ross_lid; /* ross global and local IDs */
-  tw_pe* pe;
-  tw_lpid nkp_per_pe = g_tw_nkp;
-  tw_lpid lpid, kpid;
-  const tw_lptype* lptype;
-  const st_model_types* trace_type;
-
-  auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
-  auto parser = orchestrator.GetYAMLParser();
-  const auto& configIndices = parser->GetLPTypeConfigIndices();
-  const auto& lpConfigs = parser->GetLPTypeConfigs();
-
-  /* have 16 kps per pe, this is the optimized configuration for ROSS custom mapping */
-  for (kpid = 0; kpid < nkp_per_pe; kpid++)
-    tw_kp_onpe(kpid, g_tw_pe);
-
-  tw_lpid lp_start = g_tw_mynode * lps_per_pe_floor + mini(g_tw_mynode, lps_leftover);
-  tw_lpid lp_end = (g_tw_mynode + 1) * lps_per_pe_floor + mini(g_tw_mynode + 1, lps_leftover);
-
-  for (lpid = lp_start; lpid < lp_end; lpid++)
-  {
-    ross_gid = lpid;
-    ross_lid = lpid - lp_start;
-    kpid = ross_lid % g_tw_nkp;
-    pe = g_tw_pe;
-
-    // codes_mapping_get_lp_info(
-    //   ross_gid, NULL, &grp_id, lp_type_name, &lpt_id, NULL, &rep_id, &offset);
-
-#if CODES_MAPPING_DEBUG
-    printf("lp:%llu --> kp:%llu, pe:%lu\n", ross_gid, kpid, pe->id);
-#endif
-    tw_lp_onpe(ross_lid, pe, ross_gid);
-    tw_lp_onkp(g_tw_lp[ross_lid], g_tw_kp[kpid]);
-
-    std::string lp_type_name = lpConfigs[configIndices[ross_lid]].ModelName;
-    lptype = lp_type_lookup(lp_type_name.c_str());
-    if (lptype == NULL)
-      tw_error(TW_LOC,
-        "could not find LP with type name \"%s\", "
-        "did you forget to register the LP?\n",
-        lp_type_name.c_str());
-    else
-      /* sorry, const... */
-      tw_lp_settype(ross_lid, (tw_lptype*)lptype);
-    if (g_st_ev_trace || g_st_model_stats || g_st_use_analysis_lps)
-    {
-      trace_type = st_model_type_lookup(lp_type_name.c_str());
-      st_model_settype(ross_lid, (st_model_types*)trace_type);
-    }
-  }
-  return;
-}
-
 /* This function takes the global LP ID, maps it to the local LP ID and returns the LP
  * lps have global and local LP IDs
  * global LP IDs are unique across all PEs, local LP IDs are unique within a PE */
@@ -718,82 +629,9 @@ void codes_mapping_setup_with_seed_offset(int offset)
   }
 }
 
-void codes_mapping_setup_with_seed_offset_yaml(int offset)
-{
-  int grp, lpt, message_size;
-  int pes = tw_nnodes();
-
-  auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
-  auto parser = orchestrator.GetYAMLParser();
-  auto& lpConfigs = parser->GetLPTypeConfigs();
-  lps_per_pe_floor = 0;
-  for (const auto& config : lpConfigs)
-  {
-    lps_per_pe_floor += config.NodeNames.size();
-  }
-  // so at this point lps_per_pe_floor is the total number of LPs in the sim
-
-  tw_lpid global_nlps = lps_per_pe_floor;
-  lps_leftover = lps_per_pe_floor % pes;
-  lps_per_pe_floor /= pes;
-  // printf("\n LPs for this PE are %d reps %d ", lps_per_pe_floor,
-  // lpconf.lpgroups[grp].repetitions);
-  g_tw_mapping = CUSTOM;
-  g_tw_custom_initial_mapping = &codes_mapping_init_yaml;
-  g_tw_custom_lp_global_to_local_map = &codes_mapping_to_lp;
-
-  const auto& simConfig = parser->GetSimulationConfig();
-
-  // configure mem-factor
-  // TODO:
-  // int mem_factor_conf;
-  // int rc = configuration_get_value_int(&config, "PARAMS", "pe_mem_factor", NULL,
-  //        &mem_factor_conf);
-  // if (rc == 0 && mem_factor_conf > 0)
-  //  mem_factor = mem_factor_conf;
-  g_tw_events_per_pe = mem_factor * codes_mapping_get_lps_for_pe();
-
-  // TODO: check for message_size in config and set to default value if not set
-  // configuration_get_value_int(&config, "PARAMS", "message_size", NULL, &message_size);
-  // if(!message_size)
-  //{
-  //    message_size = 256;
-  //    printf("\n Warning: ross message size not defined, resetting it to %d", message_size);
-  //}
-
-  // we increment the number of RNGs used to let codes_local_latency use the
-  // last one
-  g_tw_nRNG_per_lp++;
-  g_tw_nRNG_per_lp++; // Congestion Control gets its own RNG - second to last (CLL is last)
-
-  tw_define_lps(codes_mapping_get_lps_for_pe(), simConfig.ROSSMessageSize);
-
-  // use a similar computation to codes_mapping_init to compute the lpids and
-  // offsets to use in tw_rand_initial_seed
-  // an "offset" of 0 reverts to default RNG seeding behavior - see
-  // ross/rand-clcg4.c for the specific computation
-  // an "offset" < 0 is ignored
-  if (offset > 0)
-  {
-    for (tw_lpid l = 0; l < g_tw_nlp; l++)
-    {
-      for (unsigned int i = 0; i < g_tw_nRNG_per_lp; i++)
-      {
-        tw_rand_initial_seed(&g_tw_lp[l]->rng[i],
-          (g_tw_lp[l]->gid + global_nlps * offset) * g_tw_nRNG_per_lp + i, NULL);
-      }
-    }
-  }
-}
-
 void codes_mapping_setup()
 {
   codes_mapping_setup_with_seed_offset(0);
-}
-
-void codes_mapping_setup_yaml()
-{
-  codes_mapping_setup_with_seed_offset_yaml(0);
 }
 
 /* given the group and LP type name, return the annotation (or NULL) */

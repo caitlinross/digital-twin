@@ -29,16 +29,6 @@ namespace codes
 namespace orchestrator
 {
 
-static void codesMappingInit()
-{
-  Orchestrator::GetInstance().CodesMappingInit();
-}
-
-static tw_lp* codesMappingToLP(tw_lpid lpid)
-{
-  return Orchestrator::GetInstance().CodesMappingToLP(lpid);
-}
-
 Orchestrator* Orchestrator::Instance = nullptr;
 bool Orchestrator::Destroyed = false;
 
@@ -123,53 +113,6 @@ void Orchestrator::ModelNetRegister()
   }
 }
 
-void Orchestrator::CodesMappingSetup()
-{
-  int numPEs = tw_nnodes();
-  // first get total number of LPs
-  tw_lpid globalNumLPs = 0;
-  auto& lpConfigs = this->_YAMLParser->GetLPTypeConfigs();
-  for (const auto& config : lpConfigs)
-  {
-    globalNumLPs += config.NodeNames.size();
-  }
-  this->LPsPerPEFloor = globalNumLPs;
-  this->LPsRemainder = this->LPsPerPEFloor % numPEs;
-  this->LPsPerPEFloor /= numPEs;
-
-  g_tw_mapping = CUSTOM;
-  g_tw_custom_initial_mapping = &codesMappingInit;
-  g_tw_custom_lp_global_to_local_map = &codesMappingToLP;
-
-  // TODO need to add mem factor config
-  int mem_factor = 1;
-  g_tw_events_per_pe = mem_factor * this->CodesMappingGetLPsForPE();
-
-  const auto& simConfig = this->_YAMLParser->GetSimulationConfig();
-
-  // we increment the number of RNGs used to let codes_local_latency use the
-  // last one
-  g_tw_nRNG_per_lp++;
-  g_tw_nRNG_per_lp++; // Congestion Control gets its own RNG - second to last
-                      // (CLL is last)
-
-  tw_define_lps(this->CodesMappingGetLPsForPE(), simConfig.ROSSMessageSize);
-
-  // TODO ignoring the offset stuff for the RNG
-  // can add later if needed
-}
-
-int Orchestrator::CodesMappingGetLPsForPE()
-{
-  int rank;
-  // TODO fix MPI_COMM_WORLD refs
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#if CODES_MAPPING_DEBUG
-  std::cout << this->LPsPerPEFloor + (g_tw_mynode < this->LPsRemainder) << " lps for rank " << rank;
-#endif
-  return this->LPsPerPEFloor + ((tw_lpid)g_tw_mynode < this->LPsRemainder);
-}
-
 void Orchestrator::LPTypeRegister(const std::string& name, const tw_lptype* type)
 {
   // LPNameMapping nameMap;
@@ -182,72 +125,6 @@ void Orchestrator::LPTypeRegister(const std::string& name, const tw_lptype* type
 const tw_lptype* Orchestrator::LPTypeLookup(const std::string& name)
 {
   return this->LPNameMap.count(name) ? this->LPNameMap[name] : nullptr;
-}
-
-void Orchestrator::CodesMappingInit()
-{
-  const auto& configIndices = this->_YAMLParser->GetLPTypeConfigIndices();
-  const auto& lpConfigs = this->_YAMLParser->GetLPTypeConfigs();
-
-  /* have 16 kps per pe, this is the optimized configuration for ROSS custom
-   * mapping */
-  for (tw_lpid kpid = 0; kpid < g_tw_nkp; kpid++)
-  {
-    tw_kp_onpe(kpid, g_tw_pe);
-  }
-
-  tw_lpid lp_start =
-    g_tw_mynode * this->LPsPerPEFloor + std::min(static_cast<unsigned long long>(g_tw_mynode),
-                                          static_cast<unsigned long long>(this->LPsRemainder));
-  tw_lpid lp_end = (g_tw_mynode + 1) * this->LPsPerPEFloor +
-                   std::min(static_cast<unsigned long long>(g_tw_mynode + 1),
-                     static_cast<unsigned long long>(this->LPsRemainder));
-
-  for (tw_lpid lpid = lp_start; lpid < lp_end; lpid++)
-  {
-    tw_lpid ross_gid = lpid;
-    tw_lpid ross_lid = lpid - lp_start;
-    tw_lpid kpid = ross_lid % g_tw_nkp;
-    tw_pe* pe = g_tw_pe;
-
-    tw_lp_onpe(ross_lid, pe, ross_gid);
-    tw_lp_onkp(g_tw_lp[ross_lid], g_tw_kp[kpid]);
-
-    // now we need to figure out for each lpid, what kind of lp is it
-    // so before we can go any further, we need to read in the DOT file to
-    // get the topology, because that will be used for the mapping
-    // that combined with the size of LPConfig->NodeNames, will help us to
-    // figure out the lp type name for now, we'll only do this for serial impls
-    // because we're working with such small networks in phase I. in phase II we
-    // can add some kind of graph partitioner so we can do parallel
-    std::string lpTypeName = lpConfigs[configIndices[ross_lid]].ModelName;
-    const tw_lptype* lptype = this->LPTypeLookup(lpTypeName);
-
-#if CODES_MAPPING_DEBUG
-    std::cout << "lp: " << ross_gid << " --> kp: " << kpid << ", pe: " << pe->id;
-#endif
-    if (!lptype)
-    {
-      tw_error(TW_LOC,
-        "could not find LP with type name \"%s\", "
-        "did you forget to register the LP?\n",
-        lpTypeName.c_str());
-    }
-    else
-    {
-      tw_lp_settype(ross_lid, (tw_lptype*)lptype);
-    }
-
-    // TODO need to do the event tracing stuff
-  }
-}
-
-tw_lp* Orchestrator::CodesMappingToLP(tw_lpid lpid)
-{
-  int index = lpid - (g_tw_mynode * this->LPsPerPEFloor) -
-              std::min(static_cast<unsigned long long>(g_tw_mynode),
-                static_cast<unsigned long long>(this->LPsRemainder));
-  return g_tw_lp[index];
 }
 
 void Orchestrator::ModelNetBaseConfigure()

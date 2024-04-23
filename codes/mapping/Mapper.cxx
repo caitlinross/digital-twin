@@ -113,7 +113,6 @@ Mapper::Mapper(std::shared_ptr<orchestrator::YAMLParser> parser)
 {
   // construct the nodes
   const auto& lpConfigs = this->Parser->GetLPTypeConfigs();
-  const auto& typeIndices = this->Parser->GetLPTypeConfigIndices();
   auto graph = this->Parser->GetGraphConfig().GetGraph();
 
   auto& tree = this->Parser->GetYAMLTree();

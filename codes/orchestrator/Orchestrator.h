@@ -48,15 +48,7 @@ public:
   // Register the LPs with model-net
   void ModelNetRegister();
 
-  // map LPs to PEs
-  void CodesMappingSetup();
-
-  void CodesMappingInit();
-  tw_lp* CodesMappingToLP(tw_lpid lpid);
-
   void LPTypeRegister(const std::string& name, const tw_lptype* type);
-
-  int CodesMappingGetLPsForPE();
 
   void ModelNetBaseConfigure();
 
@@ -83,15 +75,6 @@ private:
   bool SimulationConfigured = false;
   std::vector<int> ConfiguredNetworks;
 
-  tw_lpid LPsPerPEFloor;
-  tw_lpid LPsRemainder;
-
-  // struct LPNameMapping
-  //{
-  //   std::string Name;
-  //   const tw_lptype* LPType;
-  // };
-  // std::vector<LPNameMapping> LPNameMap;
   std::map<std::string, const tw_lptype*> LPNameMap;
 
   const tw_lptype* LPTypeLookup(const std::string& name);

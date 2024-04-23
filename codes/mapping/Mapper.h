@@ -88,9 +88,6 @@ private:
   // perhaps this will get the yaml parser and stuff, and then use that to
   // create all the relevant data structures for setting up the mapping
   // LPConfigs is a vector of the different types of LPs
-  // LPTypeConfigIndices is a vector of indices into the LPConfigs - but maybe
-  // we won't need it eventually
-  // RouterConnectivity - a matrix of the communication between routers
   std::shared_ptr<orchestrator::YAMLParser> Parser;
 
   // Keep track of info for each node in the network. Stored in a vector
