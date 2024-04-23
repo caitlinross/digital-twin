@@ -365,6 +365,8 @@ static void sp_init(sp_state* ns, tw_lp* lp)
 
   /* inititalize global logical ID w.r.t. annotation */
   // ns->id = codes_mapping_get_lp_relative_id(lp->gid, 0, 1);
+  auto mapper = codes::orchestrator::Orchestrator::GetInstance().GetMapper();
+  ns->id = mapper->GetRelativeLPId(lp->gid);
 
   /* all devices are idle to begin with */
   ns->send_next_idle =
@@ -853,7 +855,7 @@ static void sp_read_config_yaml(const char* anno, simplep2p_param* p)
   auto mapping = orchestrator.GetMapper();
   // so this ends up getting the number of this type of LP for based on the group name, annotations,
   // etc.
-  p->num_lps = mapping->GetLPCount(LP_CONFIG_NM);
+  p->num_lps = mapping->GetLPTypeCount(LP_CONFIG_NM);
 
   sp_set_params(latencyFile.c_str(), bwFile.c_str(), p);
   if (p->mat_len != (2 * p->num_lps))

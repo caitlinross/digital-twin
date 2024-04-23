@@ -19,7 +19,7 @@ set(srcs
 # mapping
   mapping/Mapper.cxx
   mapping/codes-jobmap.c
-  mapping/codes-mapping-context.c
+  mapping/codes-mapping-context.cxx
   mapping/codes-mapping.cxx
   mapping/jobmap-dummy.c
   mapping/jobmap-identity.c

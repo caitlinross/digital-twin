@@ -6,6 +6,7 @@
 
 #include "codes/mapping/codes-mapping-context.h"
 #include "codes/mapping/codes-mapping.h"
+#include "codes/orchestrator/Orchestrator.h"
 
 static struct codes_mctx const CODES_MCTX_DEFAULT_VAL = { .type = CODES_MCTX_GROUP_MODULO,
   .u = { .group_modulo = { .anno = {
@@ -90,6 +91,7 @@ struct codes_mctx codes_mctx_set_group_direct(
 tw_lpid codes_mctx_to_lpid(
   struct codes_mctx const* ctx, char const* dest_lp_name, tw_lpid sender_gid)
 {
+  // TODO: this is only handled for modulo
   struct codes_mctx_annotation const* anno;
   // short circuit for direct mappings
   switch (ctx->type)
@@ -113,10 +115,12 @@ tw_lpid codes_mctx_to_lpid(
 
   char const* sender_group;
   char const* sender_lpname;
-  int rep_id, offset;
+  int rep_id, offset = 0;
 
   // get sender info
-  codes_mapping_get_lp_info2(sender_gid, &sender_group, &sender_lpname, NULL, &rep_id, &offset);
+  // codes_mapping_get_lp_info2(sender_gid, &sender_group, &sender_lpname, NULL, &rep_id, &offset);
+  auto mapper = codes::orchestrator::Orchestrator::GetInstance().GetMapper();
+  auto sender_name = mapper->GetLPTypeName(sender_gid);
 
   char const* anno_str;
   if (anno->cid < 0)
@@ -134,8 +138,10 @@ tw_lpid codes_mctx_to_lpid(
 
   if (is_group_modulo || is_group_ratio)
   {
-    int num_dest_lps =
-      codes_mapping_get_lp_count(sender_group, 1, dest_lp_name, anno_str, anno->cid == -1);
+    // in this case, it needs to be the potential lps we could send to
+    // not the number of lps in that type
+    int num_dest_lps = mapper->GetDestinationLPCount(sender_gid, dest_lp_name);
+    // codes_mapping_get_lp_count(sender_group, 1, dest_lp_name, anno_str, anno->cid == -1);
     if (num_dest_lps == 0)
       tw_error(TW_LOC,
         "ERROR: Found no LPs of type %s in group %s "
@@ -144,7 +150,10 @@ tw_lpid codes_mctx_to_lpid(
         anno->cid == -1 ? "ignored" : codes_mapping_get_anno_name_by_cid(anno->cid));
 
     if (is_group_modulo)
+    {
+      // FIXME: this is broken if we have multiple dest lps
       dest_offset = offset % num_dest_lps;
+    }
     else
     {
       int num_src_lps = codes_mapping_get_lp_count(sender_group, 1, sender_lpname, NULL, 1);
@@ -167,10 +176,11 @@ tw_lpid codes_mctx_to_lpid(
   else
     assert(0);
 
-  tw_lpid rtn;
-  codes_mapping_get_lp_id(
-    sender_group, dest_lp_name, anno_str, anno->cid == -1, rep_id, dest_offset, &rtn);
-  return rtn;
+  // tw_lpid rtn;
+  // codes_mapping_get_lp_id(
+  //   sender_group, dest_lp_name, anno_str, anno->cid == -1, rep_id, dest_offset, &rtn);
+  // return rtn;
+  return mapper->GetDestinationLPId(sender_gid, dest_lp_name, dest_offset);
 }
 
 char const* codes_mctx_get_annotation(

@@ -21,7 +21,7 @@
 
 #define MN_NAME "model_net_base"
 
-#define DEBUG 0
+#define DEBUG 1
 /**** BEGIN SIMULATION DATA STRUCTURES ****/
 
 int model_net_base_magic;

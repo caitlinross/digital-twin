@@ -66,19 +66,23 @@ public:
   /**
    * Calculates the count for LPs of the given type
    */
-  int GetLPCount(const std::string& lp_type_name);
+  int GetLPTypeCount(const std::string& lp_type_name);
 
   /**
    * Calculates the global LP Id given the identifying info
    */
   tw_lpid GetLPId(const std::string& lp_type_name, int offset);
+  tw_lpid GetDestinationLPId(tw_lpid gid, const std::string& lp_typeName, int offset);
 
   /**
    * Calculates the LP id relative to the other LPs of its type
+   * Returned id is value from 0 to N-1, where n is the number of LPs of the same type
    */
   int GetRelativeLPId(tw_lpid gid);
 
   std::string GetLPTypeName(tw_lpid gid);
+
+  int GetDestinationLPCount(tw_lpid sender_gid, const std::string& dest_lp_name);
 
 private:
   // perhaps this will get the yaml parser and stuff, and then use that to
@@ -95,13 +99,18 @@ private:
   // and then we can go into the Node itself to find the correct LP to send
   // to and its id.
   std::vector<std::shared_ptr<Node>> Nodes;
+  std::map<std::string, tw_lpid> NodeNameToIdMap;
 
   tw_lpid LPsPerPEFloor = 0;
   tw_lpid LPsLeftover = 0;
 
   int MemFactor = 256;
 
-  void ConfigureMapping();
+  void FirstPassConfig();
+
+  void SetupConnections();
+
+  void ProcessEdges(Agraph_t* graph, Agnode_t* vertex, int& nodesIdx);
 };
 
 tw_peid CodesMapping(tw_lpid gid);
