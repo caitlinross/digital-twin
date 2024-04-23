@@ -8,9 +8,11 @@
 //
 //============================================================================
 
-#ifndef CODES_ORCHESTRATOR_CODESYAML_H
-#define CODES_ORCHESTRATOR_CODESYAML_H
+#ifndef CODES_YAML_PARSER_H
+#define CODES_YAML_PARSER_H
 
+#include "codes/orchestrator/GraphVizConfig.h"
+#include <c4/yml/node.hpp>
 #include <string>
 
 #include <ryml.hpp>
@@ -32,8 +34,8 @@ enum class ComponentType
 struct LPTypeConfig
 {
   ComponentType Type;
-  std::string ConfigName;
-  std::string ModelName; // the codes LP name
+  std::string ConfigName; // name used in graphviz
+  std::string ModelName;  // the codes LP name
   std::vector<std::string> NodeNames;
 };
 
@@ -47,18 +49,10 @@ struct SimulationConfig
   std::string BandwidthFileName;
 };
 
-// struct LPGroups
-//{
-//   // not necessary, just get Groups.size()
-//   //int NumLPGroups;
-//   int NumUniqueLPTypes;
-//   std::vector<LPGroup> Groups;
-// };
-
-class CodesYAML
+class YAMLParser
 {
 public:
-  CodesYAML();
+  YAMLParser();
 
   void ParseConfig(const std::string& configFile);
 
@@ -67,6 +61,9 @@ public:
   std::vector<LPTypeConfig>& GetLPTypeConfigs();
   std::vector<int>& GetLPTypeConfigIndices();
   const SimulationConfig& GetSimulationConfig();
+  ryml::Tree& GetYAMLTree();
+
+  GraphVizConfig& GetGraphConfig();
 
 private:
   std::string YamlString;
@@ -79,7 +76,11 @@ private:
 
   SimulationConfig SimConfig;
 
+  GraphVizConfig GraphConfig;
+
   std::string ParentDir;
+
+  ryml::Tree Tree;
 
   void RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex);
 };
@@ -87,4 +88,4 @@ private:
 } // end namespace orchestrator
 } // end namespace codes
 
-#endif // CODES_ORCHESTRATOR_CODESYAML_H
+#endif // CODES_YAML_PARSER_H

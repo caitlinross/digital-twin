@@ -317,11 +317,12 @@ int model_net_get_id(char* name)
 void model_net_write_stats(tw_lpid lpid, struct mn_stats* stat)
 {
   int ret;
-  char id[19 + CATEGORY_NAME_MAX + 1];
+  constexpr int id_size = 19 + CATEGORY_NAME_MAX + 1;
+  char id[id_size];
   char data[1024];
 
-  sprintf(id, "model-net-category-%s", stat->category);
-  sprintf(data,
+  snprintf(id, id_size, "model-net-category-%s", stat->category);
+  snprintf(data, 1024,
     "lp:%ld\tsend_count:%ld\tsend_bytes:%ld\tsend_time:%f\t"
     "recv_count:%ld\trecv_bytes:%ld\trecv_time:%f\tmax_event_size:%ld\n",
     (long)lpid, stat->send_count, stat->send_bytes, stat->send_time, stat->recv_count,
@@ -340,7 +341,7 @@ void model_net_print_stats(tw_lpid lpid, mn_stats mn_stats_array[])
   struct mn_stats all;
 
   memset(&all, 0, sizeof(all));
-  sprintf(all.category, "all");
+  snprintf(all.category, 4, "all");
 
   for (i = 0; i < CATEGORY_MAX; i++)
   {

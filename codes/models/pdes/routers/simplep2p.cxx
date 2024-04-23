@@ -158,7 +158,7 @@ tw_lptype sp_lp = {
   (revent_f)sp_rev_event,
   (commit_f)NULL,
   (final_f)sp_finalize,
-  (map_f)codes_mapping,
+  (map_f)codes::CodesMapping,
   sizeof(sp_state),
 };
 
@@ -344,6 +344,8 @@ static void sp_report_stats()
 }
 static void sp_init(sp_state* ns, tw_lp* lp)
 {
+  // NOTE: removing annotation specific stuff for now because I'm not really sure when it's needed,
+  // since the only examples using it is the mapping tests
   uint32_t h1 = 0, h2 = 0;
   memset(ns, 0, sizeof(*ns));
 
@@ -351,7 +353,8 @@ static void sp_init(sp_state* ns, tw_lp* lp)
   sp_magic = h1 + h2;
   /* printf("\n sp_magic %d ", sp_magic); */
 
-  ns->anno = codes_mapping_get_annotation_by_lpid(lp->gid);
+  // ns->anno = codes_mapping_get_annotation_by_lpid(lp->gid);
+  ns->anno = nullptr;
   if (ns->anno == NULL)
     ns->params = &all_params[num_params - 1];
   else
@@ -361,7 +364,7 @@ static void sp_init(sp_state* ns, tw_lp* lp)
   }
 
   /* inititalize global logical ID w.r.t. annotation */
-  ns->id = codes_mapping_get_lp_relative_id(lp->gid, 0, 1);
+  // ns->id = codes_mapping_get_lp_relative_id(lp->gid, 0, 1);
 
   /* all devices are idle to begin with */
   ns->send_next_idle =
@@ -631,7 +634,8 @@ static void handle_msg_start_event(sp_state* ns, sp_message* m, tw_lp* lp)
   total_event_size =
     model_net_get_msg_sz(SIMPLEP2P) + m->event_size_bytes + m->local_event_size_bytes;
 
-  dest_rel_id = codes_mapping_get_lp_relative_id(m->dest_mn_lp, 0, 0);
+  auto mapper = codes::orchestrator::Orchestrator::GetInstance().GetMapper();
+  dest_rel_id = mapper->GetRelativeLPId(m->dest_mn_lp);
   m->dest_mn_rel_id = dest_rel_id;
 
   /* grab the link params */
@@ -846,9 +850,10 @@ static void sp_read_config_yaml(const char* anno, simplep2p_param* p)
   std::string latencyFile = parser->GetParentPath() + "/" + simConfig.LatencyFileName;
   std::string bwFile = parser->GetParentPath() + "/" + simConfig.BandwidthFileName;
 
+  auto mapping = orchestrator.GetMapper();
   // so this ends up getting the number of this type of LP for based on the group name, annotations,
   // etc.
-  p->num_lps = codes_mapping_get_lp_count_yaml(LP_CONFIG_NM);
+  p->num_lps = mapping->GetLPCount(LP_CONFIG_NM);
 
   sp_set_params(latencyFile.c_str(), bwFile.c_str(), p);
   if (p->mat_len != (2 * p->num_lps))

@@ -11,7 +11,8 @@
 #ifndef CODES_ORCHESTRATOR_ORCHESTRATOR_H
 #define CODES_ORCHESTRATOR_ORCHESTRATOR_H
 
-#include "codes/orchestrator/CodesYAML.h"
+#include "codes/mapping/Mapper.h"
+#include "codes/orchestrator/YAMLParser.h"
 
 #include <mpi.h>
 #include <ross.h>
@@ -61,7 +62,9 @@ public:
 
   std::vector<int> ModelNetConfigure(int& id_count);
 
-  std::shared_ptr<CodesYAML> GetYAMLParser();
+  std::shared_ptr<YAMLParser> GetYAMLParser();
+
+  std::shared_ptr<Mapper> GetMapper() { return this->_Mapper; }
 
 private:
   Orchestrator();
@@ -93,7 +96,8 @@ private:
 
   const tw_lptype* LPTypeLookup(const std::string& name);
 
-  std::shared_ptr<CodesYAML> YAMLParser;
+  std::shared_ptr<YAMLParser> _YAMLParser;
+  std::shared_ptr<Mapper> _Mapper;
 };
 
 } // end namespace orchestrator

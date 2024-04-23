@@ -17,6 +17,7 @@ set(srcs
   config/txt-config-file.c
 
 # mapping
+  mapping/Mapper.cxx
   mapping/codes-jobmap.c
   mapping/codes-mapping-context.c
   mapping/codes-mapping.cxx
@@ -41,7 +42,7 @@ set(srcs
   models/pdes/routers/simplep2p.cxx
 
 # orchestrator
-  orchestrator/CodesYAML.cxx
+  orchestrator/YAMLParser.cxx
   orchestrator/GraphVizConfig.cxx
   orchestrator/Orchestrator.cxx
 
@@ -69,6 +70,7 @@ set(headers
   config/txt-config-file.h
 
 # mapping
+  mapping/Mapper.h
   mapping/codes-jobmap-method-impl.h
   mapping/codes-jobmap.h
   mapping/codes-mapping-context.h
@@ -93,7 +95,7 @@ set(headers
   models/pdes/routers/simplep2p.h
 
 # orchestrator
-  orchestrator/CodesYAML.h
+  orchestrator/YAMLParser.h
   orchestrator/GraphVizConfig.h
   orchestrator/Orchestrator.h
 
@@ -127,7 +129,6 @@ target_link_libraries(codes
     ROSS::ROSS
     ${codes_deps}
     ryml::ryml
-  PRIVATE
     GraphViz::cgraph
 )
 

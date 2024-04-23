@@ -6,9 +6,11 @@
 
 #include <assert.h>
 #include <cmath>
+#include <cstring>
 #include <stddef.h>
 
 #include "codes/GlobalDefines.h"
+#include "codes/mapping/Mapper.h"
 #include "codes/mapping/codes-mapping.h"
 #include "codes/model-net/model-net-lp.h"
 #include "codes/model-net/model-net-method.h"
@@ -63,7 +65,7 @@ tw_lptype model_net_base_lp = {
   (revent_f)model_net_base_event_rc,
   (commit_f)model_net_commit_event,
   (final_f)model_net_base_finalize,
-  (map_f)codes_mapping,
+  (map_f)codes::CodesMapping,
   sizeof(model_net_base_state),
 };
 
@@ -601,10 +603,13 @@ void model_net_base_lp_init(model_net_base_state* ns, tw_lp* lp)
   char lp_type_name[MAX_NAME_LENGTH], anno[MAX_NAME_LENGTH], group[MAX_NAME_LENGTH];
   int dummy;
 
+  auto mapper = codes::orchestrator::Orchestrator::GetInstance().GetMapper();
   if (UseYAMLConfig)
   {
-    codes_mapping_get_lp_info_yaml(lp->gid, lp_type_name, &dummy, &dummy);
+    // codes_mapping_get_lp_info_yaml(lp->gid, lp_type_name, &dummy, &dummy);
     ns->params = &all_params[0];
+    auto typeName = mapper->GetLPTypeName(lp->gid);
+    strncpy(lp_type_name, typeName.c_str(), typeName.size());
   }
   else
   {
@@ -631,8 +636,13 @@ void model_net_base_lp_init(model_net_base_state* ns, tw_lp* lp)
     }
   }
 
+  // so for simplep2p example this should actually be 1, not 3, so it's not just simply getting the
+  // count of a specifc LP type
+  // so need to check with dragonfly sim then, so i think for the terminal lp, it would be that
+  // count within a repetition and similarly for the router lp
+  // so then in our case, it should just be 1 for now?
   if (UseYAMLConfig)
-    ns->nics_per_router = codes_mapping_get_lp_count_yaml(lp_type_name);
+    ns->nics_per_router = 1; // mapper->GetLPCount(lp_type_name);
   else
     ns->nics_per_router = codes_mapping_get_lp_count(group, 1, lp_type_name, NULL, 1);
 
@@ -821,16 +831,24 @@ void handle_new_msg(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg* m, t
 #if DEBUG
   printf("%llu Entered handle_new_msg()\n", LLU(tw_now(lp)));
 #endif
+  auto mapper = codes::orchestrator::Orchestrator::GetInstance().GetMapper();
   static int num_servers = -1;
   static int servers_per_node = -1;
   if (num_servers == -1)
   {
     char const* sender_group;
-    char const* sender_lpname;
+    std::string sender_lpname;
     int rep_id, offset;
     model_net_request* r = &m->msg.m_base.req;
-    codes_mapping_get_lp_info2(r->src_lp, &sender_group, &sender_lpname, NULL, &rep_id, &offset);
-    num_servers = codes_mapping_get_lp_count(sender_group, 1, sender_lpname, NULL, 1);
+    sender_lpname = mapper->GetLPTypeName(r->src_lp);
+    // so this is how many servers we're connected to, not total number of servers in the sim
+    // so we'll need the graph info for this
+    // TODO: fix
+    num_servers = 1; // mapper->GetLPCount(sender_lpname);
+    // codes_mapping_get_lp_info2(r->src_lp, &sender_group, &sender_lpname, NULL,
+    // &rep_id, &offset);
+    // num_servers = codes_mapping_get_lp_count(sender_group, 1,
+    // sender_lpname, NULL, 1);
     servers_per_node = num_servers / ns->params->num_queues; // this is for entire switch
     if (servers_per_node == 0)
       servers_per_node = 1;

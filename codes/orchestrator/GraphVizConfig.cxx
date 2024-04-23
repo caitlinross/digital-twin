@@ -10,8 +10,8 @@
 
 #include "codes/orchestrator/GraphVizConfig.h"
 
-
 #include <filesystem>
+#include <graphviz/cgraph.h>
 #include <iostream>
 
 namespace codes
@@ -25,7 +25,7 @@ void GraphVizConfig::ParseConfig(const std::string& dotFile)
   }
 
   // can't use ifstream since graphviz is a C lib
-  FILE *fp = fopen(dotFile.c_str(), "r");
+  FILE* fp = fopen(dotFile.c_str(), "r");
   // TODO check for errors
 
   this->Graph = agread(fp, 0);
@@ -34,13 +34,11 @@ void GraphVizConfig::ParseConfig(const std::string& dotFile)
     std::cout << "error: graph couldn't be read" << std::endl;
     return;
   }
-
-  std::cout << "Graph name: " << agnameof(this->Graph) << std::endl;
-  std::cout << "Number of nodes " << agnnodes(this->Graph) << std::endl;
-  std::cout << "Number of edges " << agnedges(this->Graph) << std::endl;
-  std::cout << "Number of subgraphs " << agnsubg(this->Graph) << std::endl;
 }
 
-
+Agraph_t* GraphVizConfig::GetGraph()
+{
+  return this->Graph;
+}
 
 } // end namespace codes

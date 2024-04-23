@@ -8,7 +8,7 @@
 //
 //============================================================================
 
-#include "codes/orchestrator/CodesYAML.h"
+#include "codes/orchestrator/YAMLParser.h"
 #include "codes/orchestrator/GraphVizConfig.h"
 
 #include <c4/std/string.hpp>
@@ -24,9 +24,9 @@ namespace codes
 namespace orchestrator
 {
 
-CodesYAML::CodesYAML() {}
+YAMLParser::YAMLParser() {}
 
-void CodesYAML::ParseConfig(const std::string& configFile)
+void YAMLParser::ParseConfig(const std::string& configFile)
 {
   std::filesystem::path yamlPath(configFile);
   if (!std::filesystem::exists(yamlPath))
@@ -48,9 +48,9 @@ void CodesYAML::ParseConfig(const std::string& configFile)
   // std::cout << "yaml:\n" << yaml << std::endl;
 
   // start parsing the file
-  ryml::Tree tree = ryml::parse_in_arena(ryml::to_csubstr(yaml));
+  this->Tree = ryml::parse_in_arena(ryml::to_csubstr(yaml));
 
-  ryml::ConstNodeRef root = tree.rootref();
+  ryml::ConstNodeRef root = this->Tree.rootref();
 
   int typeIndex = 0;
   for (ryml::ConstNodeRef const& child : root.children())
@@ -118,31 +118,40 @@ void CodesYAML::ParseConfig(const std::string& configFile)
     }
   }
 
-  GraphVizConfig config;
-  config.ParseConfig(this->DOTFileName);
+  this->GraphConfig.ParseConfig(this->DOTFileName);
 }
 
-std::string CodesYAML::GetParentPath()
+std::string YAMLParser::GetParentPath()
 {
   return this->ParentDir;
 }
 
-std::vector<LPTypeConfig>& CodesYAML::GetLPTypeConfigs()
+std::vector<LPTypeConfig>& YAMLParser::GetLPTypeConfigs()
 {
   return this->LPConfigs;
 }
 
-std::vector<int>& CodesYAML::GetLPTypeConfigIndices()
+std::vector<int>& YAMLParser::GetLPTypeConfigIndices()
 {
   return this->LPTypeConfigIndices;
 }
 
-const SimulationConfig& CodesYAML::GetSimulationConfig()
+const SimulationConfig& YAMLParser::GetSimulationConfig()
 {
   return this->SimConfig;
 }
 
-void CodesYAML::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)
+GraphVizConfig& YAMLParser::GetGraphConfig()
+{
+  return this->GraphConfig;
+}
+
+ryml::Tree& YAMLParser::GetYAMLTree()
+{
+  return this->Tree;
+}
+
+void YAMLParser::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)
 {
   while (lpTypeIndex >= this->LPConfigs.size())
   {

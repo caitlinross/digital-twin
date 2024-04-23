@@ -9,12 +9,14 @@
 //============================================================================
 
 #include "codes/orchestrator/Orchestrator.h"
-#include "codes/orchestrator/CodesYAML.h"
+#include "codes/mapping/Mapper.h"
+#include "codes/orchestrator/YAMLParser.h"
 
 #include "codes/model-net/model-net-lp.h"
 #include "codes/model-net/model-net.h"
 #include "codes/util/jenkins-hash.h"
 
+#include <memory>
 #include <ross.h>
 
 #include <algorithm>
@@ -43,7 +45,7 @@ bool Orchestrator::Destroyed = false;
 Orchestrator::Orchestrator()
   : Comm(MPI_COMM_WORLD)
   , ConfiguredNetworks(MAX_NETS, 0)
-  , YAMLParser(std::make_shared<CodesYAML>())
+  , _YAMLParser(std::make_shared<YAMLParser>())
 {
 }
 
@@ -72,9 +74,9 @@ void Orchestrator::CreateInstance()
   Instance = &theInstance;
 }
 
-std::shared_ptr<CodesYAML> Orchestrator::GetYAMLParser()
+std::shared_ptr<YAMLParser> Orchestrator::GetYAMLParser()
 {
-  return this->YAMLParser;
+  return this->_YAMLParser;
 }
 
 void Orchestrator::ParseConfig(const std::string& configFileName)
@@ -84,7 +86,10 @@ void Orchestrator::ParseConfig(const std::string& configFileName)
     // TODO error
   }
 
-  this->YAMLParser->ParseConfig(configFileName);
+  this->_YAMLParser->ParseConfig(configFileName);
+  this->_Mapper = std::make_shared<Mapper>(this->_YAMLParser);
+  // TODO: this can't be called here because model net register has to happen first
+  // this->_Mapper->MappingSetup(0);
 }
 
 bool Orchestrator::IsSimulationConfigured()
@@ -99,7 +104,7 @@ void Orchestrator::ModelNetRegister()
   // essentially), note which ones we are using then we need to call
   // model_net_base_register to register them with ROSS. looks like we don't
   // need to update anything there
-  auto& lpConfigs = this->YAMLParser->GetLPTypeConfigs();
+  auto& lpConfigs = this->_YAMLParser->GetLPTypeConfigs();
   for (const auto& config : lpConfigs)
   {
     for (int n = 0; n < MAX_NETS; n++)
@@ -123,7 +128,7 @@ void Orchestrator::CodesMappingSetup()
   int numPEs = tw_nnodes();
   // first get total number of LPs
   tw_lpid globalNumLPs = 0;
-  auto& lpConfigs = this->YAMLParser->GetLPTypeConfigs();
+  auto& lpConfigs = this->_YAMLParser->GetLPTypeConfigs();
   for (const auto& config : lpConfigs)
   {
     globalNumLPs += config.NodeNames.size();
@@ -140,7 +145,7 @@ void Orchestrator::CodesMappingSetup()
   int mem_factor = 1;
   g_tw_events_per_pe = mem_factor * this->CodesMappingGetLPsForPE();
 
-  const auto& simConfig = this->YAMLParser->GetSimulationConfig();
+  const auto& simConfig = this->_YAMLParser->GetSimulationConfig();
 
   // we increment the number of RNGs used to let codes_local_latency use the
   // last one
@@ -160,7 +165,7 @@ int Orchestrator::CodesMappingGetLPsForPE()
   // TODO fix MPI_COMM_WORLD refs
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #if CODES_MAPPING_DEBUG
-  printf("%d lps for rank %d\n", this->LPsPerPEFloor + (g_tw_mynode < this->LPsRemainder), rank);
+  std::cout << this->LPsPerPEFloor + (g_tw_mynode < this->LPsRemainder) << " lps for rank " << rank;
 #endif
   return this->LPsPerPEFloor + ((tw_lpid)g_tw_mynode < this->LPsRemainder);
 }
@@ -181,8 +186,8 @@ const tw_lptype* Orchestrator::LPTypeLookup(const std::string& name)
 
 void Orchestrator::CodesMappingInit()
 {
-  const auto& configIndices = this->YAMLParser->GetLPTypeConfigIndices();
-  const auto& lpConfigs = this->YAMLParser->GetLPTypeConfigs();
+  const auto& configIndices = this->_YAMLParser->GetLPTypeConfigIndices();
+  const auto& lpConfigs = this->_YAMLParser->GetLPTypeConfigs();
 
   /* have 16 kps per pe, this is the optimized configuration for ROSS custom
    * mapping */
@@ -219,7 +224,7 @@ void Orchestrator::CodesMappingInit()
     const tw_lptype* lptype = this->LPTypeLookup(lpTypeName);
 
 #if CODES_MAPPING_DEBUG
-    printf("lp:%lu --> kp:%lu, pe:%llu\n", ross_gid, kpid, pe->id);
+    std::cout << "lp: " << ross_gid << " --> kp: " << kpid << ", pe: " << pe->id;
 #endif
     if (!lptype)
     {
@@ -260,8 +265,8 @@ void Orchestrator::ModelNetBaseConfigure()
   // need to read parameters of all model-net lps
   // and save the info into global vars annos and all_params
   // SetAnnos();
-  // auto& lpConfigs = this->YAMLParser->GetLPTypeConfigs();
-  auto& simConfig = this->YAMLParser->GetSimulationConfig();
+  // auto& lpConfigs = this->_YAMLParser->GetLPTypeConfigs();
+  auto& simConfig = this->_YAMLParser->GetSimulationConfig();
   // for (int lp = 0; lp < lpConfigs.size(); lp++)
   {
     // TODO So this should be done per anno or num_params, but i don't fully understand

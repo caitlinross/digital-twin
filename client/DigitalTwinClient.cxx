@@ -66,7 +66,9 @@ int main(int argc, char* argv[])
   // says this loads the config file and sets up the number of LPs on each PE
   // this is similar to the above, in that its dependent on lpconf
   // these two functions will be replaced by functionality in the orchestrator
-  codes_mapping_setup_yaml();
+  // codes_mapping_setup_yaml();
+  auto mapper = orchestrator.GetMapper();
+  mapper->MappingSetup();
 
   int num_nets;
   int* net_ids;
@@ -79,8 +81,8 @@ int main(int argc, char* argv[])
   SimpleServerSetNetId(net_id);
 
   // also depends on config globals
-  int num_servers = codes_mapping_get_lp_count_yaml("SimpleServer");
-  assert(num_servers == 3);
+  // int num_servers = codes_mapping_get_lp_count_yaml("SimpleServer");
+  // assert(num_servers == 3);
 
   lp_io_handle handle;
   char name[15] = "modelnet-test\0";

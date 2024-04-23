@@ -78,7 +78,7 @@ int codes_mapping_get_lps_for_pe()
   int rank;
   MPI_Comm_rank(MPI_COMM_CODES, &rank);
 #if CODES_MAPPING_DEBUG
-  printf("%d lps for rank %d\n", lps_per_pe_floor + (g_tw_mynode < lps_leftover), rank);
+  printf("%llu lps for rank %d\n", lps_per_pe_floor + (g_tw_mynode < lps_leftover), rank);
 #endif
   return lps_per_pe_floor + ((tw_lpid)g_tw_mynode < lps_leftover);
 }
@@ -98,6 +98,7 @@ tw_peid codes_mapping(tw_lpid gid)
   /*return gid / lps_per_pe_floor;*/
 }
 
+// don't think I need this
 int codes_mapping_get_group_reps(const char* group_name)
 {
   int grp;
@@ -112,6 +113,7 @@ int codes_mapping_get_group_reps(const char* group_name)
 // returns the total number of LPs defined in LPGROUPS
 // this lets us define an auxillary LP group for one off LPs
 // like the supervisory controller
+// don't think I need this
 int codes_mapping_get_lpgroups_lp_count()
 {
   tw_lpid total_count = 0;
@@ -563,7 +565,7 @@ static void codes_mapping_init(void)
       ross_gid, NULL, &grp_id, lp_type_name, &lpt_id, NULL, &rep_id, &offset);
 
 #if CODES_MAPPING_DEBUG
-    printf("lp:%lu --> kp:%lu, pe:%llu\n", ross_gid, kpid, pe->id);
+    printf("lp:%llu --> kp:%llu, pe:%lu\n", ross_gid, kpid, pe->id);
 #endif
     tw_lp_onpe(ross_lid, pe, ross_gid);
     tw_lp_onkp(g_tw_lp[ross_lid], g_tw_kp[kpid]);
@@ -618,7 +620,7 @@ static void codes_mapping_init_yaml(void)
     //   ross_gid, NULL, &grp_id, lp_type_name, &lpt_id, NULL, &rep_id, &offset);
 
 #if CODES_MAPPING_DEBUG
-    printf("lp:%lu --> kp:%lu, pe:%llu\n", ross_gid, kpid, pe->id);
+    printf("lp:%llu --> kp:%llu, pe:%lu\n", ross_gid, kpid, pe->id);
 #endif
     tw_lp_onpe(ross_lid, pe, ross_gid);
     tw_lp_onkp(g_tw_lp[ross_lid], g_tw_kp[kpid]);

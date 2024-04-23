@@ -23,8 +23,10 @@ class GraphVizConfig
 public:
   void ParseConfig(const std::string& dotFile);
 
+  Agraph_t* GetGraph();
+
 private:
-  Agraph_t *Graph;
+  Agraph_t* Graph;
 };
 
 } // end namespace codes
