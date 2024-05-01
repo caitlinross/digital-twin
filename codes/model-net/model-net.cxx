@@ -86,7 +86,7 @@ void model_net_register()
 
 void model_net_register_yaml()
 {
-  auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
+  auto& orchestrator = codes::Orchestrator::GetInstance();
   auto parser = orchestrator.GetYAMLParser();
   // first set up which networks need to be registered, then pass off to base
   // LP to do its thing

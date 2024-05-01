@@ -54,7 +54,7 @@ tw_lptype SimpleServerLP = {
 void SimpleServerAddLPType()
 {
   lp_type_register("SimpleServer", &SimpleServerLP);
-  codes::orchestrator::Orchestrator::GetInstance().LPTypeRegister("SimpleServer", &SimpleServerLP);
+  codes::Orchestrator::GetInstance().LPTypeRegister("SimpleServer", &SimpleServerLP);
 }
 
 void simple_server_init(SimpleServerState* ns, tw_lp* lp)

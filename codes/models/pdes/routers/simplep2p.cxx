@@ -365,7 +365,7 @@ static void sp_init(sp_state* ns, tw_lp* lp)
 
   /* inititalize global logical ID w.r.t. annotation */
   // ns->id = codes_mapping_get_lp_relative_id(lp->gid, 0, 1);
-  auto mapper = codes::orchestrator::Orchestrator::GetInstance().GetMapper();
+  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
   ns->id = mapper->GetRelativeLPId(lp->gid);
 
   /* all devices are idle to begin with */
@@ -636,7 +636,7 @@ static void handle_msg_start_event(sp_state* ns, sp_message* m, tw_lp* lp)
   total_event_size =
     model_net_get_msg_sz(SIMPLEP2P) + m->event_size_bytes + m->local_event_size_bytes;
 
-  auto mapper = codes::orchestrator::Orchestrator::GetInstance().GetMapper();
+  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
   dest_rel_id = mapper->GetRelativeLPId(m->dest_mn_lp);
   m->dest_mn_rel_id = dest_rel_id;
 
@@ -812,7 +812,7 @@ static tw_stime simplep2p_packet_event(model_net_request const* req, uint64_t me
 static void sp_read_config(const char* anno, simplep2p_param* p)
 {
   // TODO: need to implement for annos
-  auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
+  auto& orchestrator = codes::Orchestrator::GetInstance();
   auto parser = orchestrator.GetYAMLParser();
   const auto& simConfig = parser->GetSimulationConfig();
   std::string latencyFile = parser->GetParentPath() + "/" + simConfig.LatencyFileName;

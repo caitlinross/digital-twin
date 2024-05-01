@@ -20,8 +20,6 @@
 
 namespace codes
 {
-namespace orchestrator
-{
 
 enum class ComponentType
 {
@@ -95,7 +93,6 @@ private:
   void RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex);
 };
 
-} // end namespace orchestrator
 } // end namespace codes
 
 #endif // CODES_YAML_PARSER_H

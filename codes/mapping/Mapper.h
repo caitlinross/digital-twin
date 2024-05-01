@@ -32,8 +32,7 @@ struct Node;
 class Mapper
 {
 public:
-  // the orchestrator can setup the class
-  Mapper(std::shared_ptr<orchestrator::YAMLParser> parser);
+  Mapper(std::shared_ptr<YAMLParser> parser);
   ~Mapper();
 
   /**
@@ -102,7 +101,7 @@ private:
   // perhaps this will get the yaml parser and stuff, and then use that to
   // create all the relevant data structures for setting up the mapping
   // LPConfigs is a vector of the different types of LPs
-  std::shared_ptr<orchestrator::YAMLParser> Parser;
+  std::shared_ptr<YAMLParser> Parser;
 
   // Keep track of info for each node in the network. Stored in a vector
   // so we can have O(1) access when we have the global LP id, and in the case

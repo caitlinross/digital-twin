@@ -349,7 +349,7 @@ static void base_read_config_yaml(const char* anno, model_net_base_params* p)
   long int packet_size_l = 0;
   uint64_t packet_size;
 
-  auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
+  auto& orchestrator = codes::Orchestrator::GetInstance();
   auto parser = orchestrator.GetYAMLParser();
   auto& simConfig = parser->GetSimulationConfig();
   packet_size = simConfig.PacketSize;
@@ -557,7 +557,7 @@ void model_net_base_configure_yaml()
   // the base parameters
   // - the init is a little easier as we can use the LP-id to look up the
   // annotation
-  auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
+  auto& orchestrator = codes::Orchestrator::GetInstance();
   auto parser = orchestrator.GetYAMLParser();
   auto& simConfig = parser->GetSimulationConfig();
   auto& lpConfigs = parser->GetLPTypeConfigs();
@@ -603,7 +603,7 @@ void model_net_base_lp_init(model_net_base_state* ns, tw_lp* lp)
   char lp_type_name[MAX_NAME_LENGTH], anno[MAX_NAME_LENGTH], group[MAX_NAME_LENGTH];
   int dummy;
 
-  auto mapper = codes::orchestrator::Orchestrator::GetInstance().GetMapper();
+  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
   ns->params = &all_params[0];
   auto typeName = mapper->GetLPTypeName(lp->gid);
   strncpy(lp_type_name, typeName.c_str(), typeName.size());
@@ -811,7 +811,7 @@ void handle_new_msg(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg* m, t
 #if DEBUG
   printf("%llu Entered handle_new_msg()\n", LLU(tw_now(lp)));
 #endif
-  auto mapper = codes::orchestrator::Orchestrator::GetInstance().GetMapper();
+  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
   static int num_servers = -1;
   static int servers_per_node = -1;
   if (num_servers == -1)

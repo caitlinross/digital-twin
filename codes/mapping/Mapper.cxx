@@ -37,7 +37,7 @@ namespace codes
 // So we use the orchestrator to get the mapping object and call the relevant method.
 void codesMappingInit()
 {
-  auto& orchestrator = orchestrator::Orchestrator::GetInstance();
+  auto& orchestrator = Orchestrator::GetInstance();
   auto self = orchestrator.GetMapper();
   self->MappingInit();
 }
@@ -46,14 +46,14 @@ tw_lp* codesMappingToLP(tw_lpid lpid)
 {
   // a little weird, but we need to pass a function pointer to ROSS, but
   // we can't provide a pointer to a non-static member function.
-  auto& orchestrator = orchestrator::Orchestrator::GetInstance();
+  auto& orchestrator = Orchestrator::GetInstance();
   auto self = orchestrator.GetMapper();
   return self->MappingToLP(lpid);
 }
 
 tw_peid CodesMapping(tw_lpid gid)
 {
-  auto& orchestrator = orchestrator::Orchestrator::GetInstance();
+  auto& orchestrator = Orchestrator::GetInstance();
   auto self = orchestrator.GetMapper();
   return self->GlobalMapping(gid);
 }
@@ -96,8 +96,7 @@ std::ostream& operator<<(std::ostream& os, const Node& node)
 }
 
 // given the name of a node, find out what index in the LPTypeConfig it is
-int findConfigIndex(
-  const std::vector<orchestrator::LPTypeConfig>& lpConfigs, const std::string& nodeName)
+int findConfigIndex(const std::vector<LPTypeConfig>& lpConfigs, const std::string& nodeName)
 {
   for (int idx = 0; idx < lpConfigs.size(); idx++)
   {
@@ -113,7 +112,7 @@ int findConfigIndex(
   return -1;
 }
 
-Mapper::Mapper(std::shared_ptr<orchestrator::YAMLParser> parser)
+Mapper::Mapper(std::shared_ptr<YAMLParser> parser)
   : Parser(parser)
 {
   // construct the nodes

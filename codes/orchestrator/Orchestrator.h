@@ -22,8 +22,6 @@
 
 namespace codes
 {
-namespace orchestrator
-{
 
 /**
  * The Orchestrator takes in a config file and MPI communicator (default is MPI_COMM_WORLD)
@@ -83,7 +81,6 @@ private:
   std::shared_ptr<Mapper> _Mapper;
 };
 
-} // end namespace orchestrator
 } // end namespace codes
 
 #endif // CODES_ORCHESTRATOR_ORCHESTRATOR_H

@@ -119,7 +119,7 @@ tw_lpid codes_mctx_to_lpid(
 
   // get sender info
   // codes_mapping_get_lp_info2(sender_gid, &sender_group, &sender_lpname, NULL, &rep_id, &offset);
-  auto mapper = codes::orchestrator::Orchestrator::GetInstance().GetMapper();
+  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
   auto sender_name = mapper->GetLPTypeName(sender_gid);
 
   char const* anno_str;

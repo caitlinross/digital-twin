@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
   std::string yamlFile = config_file;
   // setup the orchestrator and pass the config file
-  auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
+  auto& orchestrator = codes::Orchestrator::GetInstance();
 
   orchestrator.ParseConfig(config_file);
   // this part will be removed once orchestrator is working

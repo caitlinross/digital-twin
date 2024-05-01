@@ -25,8 +25,6 @@
 
 namespace codes
 {
-namespace orchestrator
-{
 
 Orchestrator* Orchestrator::Instance = nullptr;
 bool Orchestrator::Destroyed = false;
@@ -273,5 +271,4 @@ std::vector<int> Orchestrator::ModelNetConfigure(int& id_count)
   return ids;
 }
 
-} // end namespace orchestrator
 } // end namespace codes

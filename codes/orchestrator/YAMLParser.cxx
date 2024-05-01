@@ -21,11 +21,8 @@
 
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 
 namespace codes
-{
-namespace orchestrator
 {
 
 bool YAMLParser::ParseConfig(const std::string& configFile)
@@ -186,5 +183,4 @@ void YAMLParser::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)
   }
 }
 
-} // end namespace orchestrator
 } // end namespace codes
