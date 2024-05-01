@@ -811,40 +811,6 @@ static tw_stime simplep2p_packet_event(model_net_request const* req, uint64_t me
 
 static void sp_read_config(const char* anno, simplep2p_param* p)
 {
-  char latency_file[MAX_NAME_LENGTH];
-  char bw_file[MAX_NAME_LENGTH];
-  int rc;
-  rc = configuration_get_value_relpath(
-    &config, "PARAMS", "net_latency_ns_file", anno, latency_file, MAX_NAME_LENGTH);
-  if (rc <= 0)
-  {
-    if (anno == NULL)
-      tw_error(TW_LOC, "simplep2p: unable to read PARAMS:net_latency_ns_file");
-    else
-      tw_error(TW_LOC, "simplep2p: unable to read PARAMS:net_latency_ns_file@%s", anno);
-  }
-  rc = configuration_get_value_relpath(
-    &config, "PARAMS", "net_bw_mbps_file", anno, bw_file, MAX_NAME_LENGTH);
-  if (rc <= 0)
-  {
-    if (anno == NULL)
-      tw_error(TW_LOC, "simplep2p: unable to read PARAMS:net_bw_mbps_file");
-    else
-      tw_error(TW_LOC, "simplep2p: unable to read PARAMS:net_bw_mbps_file@%s", anno);
-  }
-  p->num_lps = codes_mapping_get_lp_count(NULL, 0, LP_CONFIG_NM, anno, 0);
-  sp_set_params(latency_file, bw_file, p);
-  if (p->mat_len != (2 * p->num_lps))
-  {
-    tw_error(TW_LOC,
-      "simplep2p config matrix doesn't match the "
-      "number of simplep2p LPs (%d vs. %d)\n",
-      p->mat_len, p->num_lps);
-  }
-}
-
-static void sp_read_config_yaml(const char* anno, simplep2p_param* p)
-{
   // TODO: need to implement for annos
   auto& orchestrator = codes::orchestrator::Orchestrator::GetInstance();
   auto parser = orchestrator.GetYAMLParser();
@@ -869,26 +835,10 @@ static void sp_read_config_yaml(const char* anno, simplep2p_param* p)
 
 static void sp_configure()
 {
-  if (!UseYAMLConfig)
-  {
-    anno_map = codes_mapping_get_lp_anno_map(LP_CONFIG_NM);
-    assert(anno_map);
-    num_params = anno_map->num_annos + (anno_map->has_unanno_lp > 0);
-    all_params = reinterpret_cast<simplep2p_param*>(malloc(num_params * sizeof(*all_params)));
-    for (int i = 0; i < anno_map->num_annos; i++)
-    {
-      sp_read_config(anno_map->annotations[i].ptr, &all_params[i]);
-    }
-    if (anno_map->has_unanno_lp > 0)
-    {
-      sp_read_config(NULL, &all_params[anno_map->num_annos]);
-    }
-    return;
-  }
   // for unannotated LPs, it will always be all_params[0]
   num_params = 1;
   all_params = reinterpret_cast<simplep2p_param*>(malloc(num_params * sizeof(*all_params)));
-  sp_read_config_yaml(nullptr, &all_params[0]);
+  sp_read_config(nullptr, &all_params[0]);
 }
 
 static void simplep2p_packet_event_rc(tw_lp* sender)

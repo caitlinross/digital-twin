@@ -9,6 +9,7 @@
 //============================================================================
 
 #include "codes/models/pdes/hosts/SimpleServer.h"
+#include "codes/mapping/Mapper.h"
 #include "codes/orchestrator/Orchestrator.h"
 #include "codes/util/CodesUtils.h"
 
@@ -44,7 +45,7 @@ tw_lptype SimpleServerLP = {
   (revent_f)svr_rev_event,
   (commit_f)NULL,
   (final_f)svr_finalize,
-  (map_f)codes_mapping,
+  (map_f)codes::CodesMapping,
   sizeof(SimpleServerState),
 };
 

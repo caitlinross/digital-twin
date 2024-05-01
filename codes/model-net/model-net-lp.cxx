@@ -604,27 +604,9 @@ void model_net_base_lp_init(model_net_base_state* ns, tw_lp* lp)
   int dummy;
 
   auto mapper = codes::orchestrator::Orchestrator::GetInstance().GetMapper();
-  if (UseYAMLConfig)
-  {
-    // codes_mapping_get_lp_info_yaml(lp->gid, lp_type_name, &dummy, &dummy);
-    ns->params = &all_params[0];
-    auto typeName = mapper->GetLPTypeName(lp->gid);
-    strncpy(lp_type_name, typeName.c_str(), typeName.size());
-  }
-  else
-  {
-    codes_mapping_get_lp_info(lp->gid, group, &dummy, lp_type_name, &dummy, anno, &dummy, &dummy);
-
-    // get annotation-specific parameters
-    for (int i = 0; i < num_params; i++)
-    {
-      if ((anno[0] == '\0' && annos[i] == NULL) || strcmp(anno, annos[i]) == 0)
-      {
-        ns->params = &all_params[i];
-        break;
-      }
-    }
-  }
+  ns->params = &all_params[0];
+  auto typeName = mapper->GetLPTypeName(lp->gid);
+  strncpy(lp_type_name, typeName.c_str(), typeName.size());
 
   // find the corresponding method name / index
   for (int i = 0; i < MAX_NETS; i++)
@@ -641,10 +623,8 @@ void model_net_base_lp_init(model_net_base_state* ns, tw_lp* lp)
   // so need to check with dragonfly sim then, so i think for the terminal lp, it would be that
   // count within a repetition and similarly for the router lp
   // so then in our case, it should just be 1 for now?
-  if (UseYAMLConfig)
-    ns->nics_per_router = 1; // mapper->GetLPCount(lp_type_name);
-  else
-    ns->nics_per_router = codes_mapping_get_lp_count(group, 1, lp_type_name, NULL, 1);
+  // TODO:
+  ns->nics_per_router = 1; // mapper->GetLPCount(lp_type_name);
 
   ns->msg_id = 0;
   ns->next_available_time = 0;
@@ -869,7 +849,8 @@ void handle_new_msg(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg* m, t
   {
     model_net_request* r = &m->msg.m_base.req;
     int rep_id, offset;
-    codes_mapping_get_lp_info2(r->src_lp, NULL, NULL, NULL, &rep_id, &offset);
+    // TODO:
+    // codes_mapping_get_lp_info2(r->src_lp, NULL, NULL, NULL, &rep_id, &offset);
     int queue = offset / ns->nics_per_router / servers_per_node_queue;
     m->msg.m_base.save_ts = ns->node_copy_next_available_time[queue];
     tw_stime exp_time = ((ns->node_copy_next_available_time[queue] > tw_now(lp))

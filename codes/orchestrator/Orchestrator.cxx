@@ -23,7 +23,6 @@
 #include <iostream>
 #include <vector>
 
-#define CODES_MAPPING_DEBUG 1
 namespace codes
 {
 namespace orchestrator
