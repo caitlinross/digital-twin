@@ -11,12 +11,10 @@
 #include <mpi.h>
 #include <ross.h>
 
-#include <ross-extern.h>
-
 #include "codes/mapping/Mapper.h"
 #include "codes/model-net/lp-type-lookup.h"
+#include "codes/orchestrator/ConfigParser.h"
 #include "codes/orchestrator/Orchestrator.h"
-#include "codes/orchestrator/YAMLParser.h"
 
 #include <graphviz/cgraph.h>
 
@@ -75,7 +73,7 @@ struct Node
   // fine for now.
   // I think these need to be weak_ptrs so we don't get cyclical references
   // that will never be freed
-  std::vector<std::weak_ptr<Node>> Connections;
+  std::vector<Node*> Connections;
 };
 
 // overridden so we can easily print config info when debugging
@@ -86,11 +84,7 @@ std::ostream& operator<<(std::ostream& os, const Node& node)
      << "\n\tConfigIdx: " << node.ConfigIdx << "\n\tConnected to: ";
   for (auto connNode : node.Connections)
   {
-    auto ptr = connNode.lock();
-    if (ptr)
-    {
-      os << ptr->NodeName << ", ";
-    }
+    os << connNode->NodeName << ", ";
   }
   return os;
 }
@@ -112,12 +106,12 @@ int findConfigIndex(const std::vector<LPTypeConfig>& lpConfigs, const std::strin
   return -1;
 }
 
-Mapper::Mapper(std::shared_ptr<YAMLParser> parser)
+Mapper::Mapper(std::shared_ptr<ConfigParser> parser)
   : Parser(parser)
 {
   // construct the nodes
   const auto& lpConfigs = this->Parser->GetLPTypeConfigs();
-  auto graph = this->Parser->GetGraphConfig().GetGraph();
+  auto graph = this->Parser->GetGraph();
 
   std::set<std::string> uniqueNodes;
   this->Nodes.resize(agnnodes(graph));
@@ -141,7 +135,7 @@ void Mapper::MappingConfig()
 {
   // on our first pass through the graph, lets just create the Node objects along with setting their
   // global LP id. then on the next pass we can set up the connections
-  auto graph = this->Parser->GetGraphConfig().GetGraph();
+  auto graph = this->Parser->GetGraph();
   const auto& lpConfigs = this->Parser->GetLPTypeConfigs();
   this->Nodes.resize(agnnodes(graph));
   int nodesIdx = 0;
@@ -161,11 +155,11 @@ void Mapper::MappingConfig()
         continue;
       }
       this->NodeNameToIdMap.insert(std::make_pair(agnameof(v), nodesIdx));
-      auto node = std::make_shared<Node>();
+      this->Nodes[nodesIdx] = std::make_unique<Node>();
+      auto node = this->Nodes[nodesIdx].get();
       node->NodeName = agnameof(v);
       node->GlobalId = nodesIdx;
       node->ConfigIdx = findConfigIndex(lpConfigs, node->NodeName);
-      this->Nodes[nodesIdx] = node;
       nodesIdx++;
       this->ProcessEdges(sub, v, nodesIdx);
     }
@@ -188,11 +182,11 @@ void Mapper::ProcessEdges(Agraph_t* graph, Agnode_t* vertex, int& nodesIdx)
     if (this->NodeNameToIdMap.count(agnameof(connVertex)) == 0)
     {
       this->NodeNameToIdMap.insert(std::make_pair(agnameof(connVertex), nodesIdx));
-      auto connNode = std::make_shared<Node>();
+      this->Nodes[nodesIdx] = std::make_unique<Node>();
+      auto connNode = this->Nodes[nodesIdx].get();
       connNode->NodeName = agnameof(connVertex);
       connNode->GlobalId = nodesIdx;
       connNode->ConfigIdx = findConfigIndex(lpConfigs, connNode->NodeName);
-      this->Nodes[nodesIdx] = connNode;
       nodesIdx++;
     }
     else
@@ -207,14 +201,14 @@ void Mapper::ProcessEdges(Agraph_t* graph, Agnode_t* vertex, int& nodesIdx)
 void Mapper::SetupConnections()
 {
   // now go through the graph again but since all nodes are created, we can set the connections
-  auto graph = this->Parser->GetGraphConfig().GetGraph();
+  auto graph = this->Parser->GetGraph();
   for (Agnode_t* v = agfstnode(graph); v; v = agnxtnode(graph, v))
   {
     if (this->NodeNameToIdMap.count(agnameof(v)) == 0)
     {
       tw_error(TW_LOC, "node %s does not exist in the NodeNameToIdMap", agnameof(v));
     }
-    auto vertexNode = this->Nodes[this->NodeNameToIdMap[agnameof(v)]];
+    auto vertexNode = this->Nodes[this->NodeNameToIdMap[agnameof(v)]].get();
     for (Agedge_t* e = agfstout(graph, v); e; e = agnxtout(graph, e))
     {
       // instead need to figure out who each vertex is attached to
@@ -223,7 +217,7 @@ void Mapper::SetupConnections()
         tw_error(TW_LOC, "node %s does not exist in the NodeNameToIdMap", agnameof(e->node));
       }
 
-      auto connNode = this->Nodes[this->NodeNameToIdMap[agnameof(e->node)]];
+      auto connNode = this->Nodes[this->NodeNameToIdMap[agnameof(e->node)]].get();
       vertexNode->Connections.push_back(connNode);
       connNode->Connections.push_back(vertexNode);
     }
@@ -421,7 +415,7 @@ int Mapper::GetRelativeLPId(tw_lpid gid)
 {
   // so some lp types (e.g., simplep2p) needs to know how many others of its type there are
   // and uses the relative ids within that lp type to keep track of things (like latencies)
-  auto node = this->Nodes[gid];
+  auto node = this->Nodes[gid].get();
   auto& configIdx = node->ConfigIdx;
   auto& lpConfig = this->Parser->GetLPTypeConfigs()[configIdx];
   int i;
@@ -437,17 +431,17 @@ int Mapper::GetRelativeLPId(tw_lpid gid)
 
 tw_lpid Mapper::GetDestinationLPId(tw_lpid sender_gid, const std::string& dest_lp_name, int offset)
 {
-  auto senderNode = this->Nodes[sender_gid];
+  auto senderNode = this->Nodes[sender_gid].get();
   auto conn = senderNode->Connections[offset];
-  auto ptr = conn.lock();
-  if (ptr)
+  if (!conn)
   {
-    return ptr->GlobalId;
+    tw_error(TW_LOC,
+      "for sending LP %d, could not determine the gid of the destination LP with name %s and "
+      "offset "
+      "%d",
+      sender_gid, dest_lp_name.c_str(), offset);
   }
-  tw_error(TW_LOC,
-    "for sending LP %d, could not determine the gid of the destination LP with name %s and offset "
-    "%d",
-    sender_gid, dest_lp_name.c_str(), offset);
+  return conn->GlobalId;
 }
 
 std::string Mapper::GetLPTypeName(tw_lpid gid)
@@ -461,11 +455,10 @@ int Mapper::GetDestinationLPCount(tw_lpid sender_gid, const std::string& dest_lp
   // given the sender_gid, we need to get the number of its connections of type dest_lp_name
   int count = 0;
   auto& lpConfigs = this->Parser->GetLPTypeConfigs();
-  auto senderNode = this->Nodes[sender_gid];
+  auto senderNode = this->Nodes[sender_gid].get();
   for (auto conn : senderNode->Connections)
   {
-    auto ptr = conn.lock();
-    if (ptr && lpConfigs[ptr->ConfigIdx].ModelName == dest_lp_name)
+    if (conn && lpConfigs[conn->ConfigIdx].ModelName == dest_lp_name)
     {
       count++;
     }

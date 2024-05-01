@@ -11,12 +11,13 @@
 #ifndef CODES_YAML_PARSER_H
 #define CODES_YAML_PARSER_H
 
-#include "codes/orchestrator/GraphVizConfig.h"
-#include <c4/yml/node.hpp>
-#include <string>
+#include <graphviz/cgraph.h>
 
+#include <c4/yml/node.hpp>
 #include <ryml.hpp>
 #include <ryml_std.hpp>
+
+#include <string>
 
 namespace codes
 {
@@ -47,9 +48,9 @@ struct SimulationConfig
 };
 
 /**
- * Handles parsing the yaml config file.
+ * Handles parsing the yaml and DOT config files.
  */
-class YAMLParser
+class ConfigParser
 {
 public:
   /**
@@ -73,9 +74,9 @@ public:
   const SimulationConfig& GetSimulationConfig();
 
   /**
-   * returns the graph viz parser
+   * Returns the graph from graphviz
    */
-  GraphVizConfig& GetGraphConfig();
+  Agraph_t* GetGraph();
 
 private:
   std::string DOTFileName;
@@ -84,13 +85,15 @@ private:
 
   SimulationConfig SimConfig;
 
-  GraphVizConfig GraphConfig;
-
   std::string ParentDir;
 
   ryml::Tree Tree;
 
+  Agraph_t* Graph;
+
   void RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex);
+
+  void ParseGraphVizConfig();
 };
 
 } // end namespace codes

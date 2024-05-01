@@ -813,7 +813,7 @@ static void sp_read_config(const char* anno, simplep2p_param* p)
 {
   // TODO: need to implement for annos
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  auto parser = orchestrator.GetYAMLParser();
+  auto parser = orchestrator.GetConfigParser();
   const auto& simConfig = parser->GetSimulationConfig();
   std::string latencyFile = parser->GetParentPath() + "/" + simConfig.LatencyFileName;
   std::string bwFile = parser->GetParentPath() + "/" + simConfig.BandwidthFileName;

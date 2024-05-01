@@ -10,7 +10,7 @@
 
 #include "codes/orchestrator/Orchestrator.h"
 #include "codes/mapping/Mapper.h"
-#include "codes/orchestrator/YAMLParser.h"
+#include "codes/orchestrator/ConfigParser.h"
 
 #include "codes/model-net/model-net-lp.h"
 #include "codes/model-net/model-net.h"
@@ -19,8 +19,6 @@
 #include <memory>
 #include <ross.h>
 
-#include <algorithm>
-#include <iostream>
 #include <vector>
 
 namespace codes
@@ -32,7 +30,7 @@ bool Orchestrator::Destroyed = false;
 Orchestrator::Orchestrator()
   : Comm(MPI_COMM_WORLD)
   , ConfiguredNetworks(MAX_NETS, 0)
-  , _YAMLParser(std::make_shared<YAMLParser>())
+  , Parser(std::make_shared<ConfigParser>())
 {
 }
 
@@ -61,9 +59,9 @@ void Orchestrator::CreateInstance()
   Instance = &theInstance;
 }
 
-std::shared_ptr<YAMLParser> Orchestrator::GetYAMLParser()
+std::shared_ptr<ConfigParser> Orchestrator::GetConfigParser()
 {
-  return this->_YAMLParser;
+  return this->Parser;
 }
 
 void Orchestrator::ParseConfig(const std::string& configFileName)
@@ -73,8 +71,8 @@ void Orchestrator::ParseConfig(const std::string& configFileName)
     // TODO error
   }
 
-  this->_YAMLParser->ParseConfig(configFileName);
-  this->_Mapper = std::make_shared<Mapper>(this->_YAMLParser);
+  this->Parser->ParseConfig(configFileName);
+  this->_Mapper = std::make_shared<Mapper>(this->Parser);
   // TODO: this can't be called here because model net register has to happen first
   // this->_Mapper->MappingSetup(0);
 }
@@ -91,7 +89,7 @@ void Orchestrator::ModelNetRegister()
   // essentially), note which ones we are using then we need to call
   // model_net_base_register to register them with ROSS. looks like we don't
   // need to update anything there
-  auto& lpConfigs = this->_YAMLParser->GetLPTypeConfigs();
+  auto& lpConfigs = this->Parser->GetLPTypeConfigs();
   for (const auto& config : lpConfigs)
   {
     for (int n = 0; n < MAX_NETS; n++)
@@ -139,8 +137,8 @@ void Orchestrator::ModelNetBaseConfigure()
   // need to read parameters of all model-net lps
   // and save the info into global vars annos and all_params
   // SetAnnos();
-  // auto& lpConfigs = this->_YAMLParser->GetLPTypeConfigs();
-  auto& simConfig = this->_YAMLParser->GetSimulationConfig();
+  // auto& lpConfigs = this->Parser->GetLPTypeConfigs();
+  auto& simConfig = this->Parser->GetSimulationConfig();
   // for (int lp = 0; lp < lpConfigs.size(); lp++)
   {
     // TODO So this should be done per anno or num_params, but i don't fully understand

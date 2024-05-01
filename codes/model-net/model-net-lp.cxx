@@ -350,7 +350,7 @@ static void base_read_config_yaml(const char* anno, model_net_base_params* p)
   uint64_t packet_size;
 
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  auto parser = orchestrator.GetYAMLParser();
+  auto parser = orchestrator.GetConfigParser();
   auto& simConfig = parser->GetSimulationConfig();
   packet_size = simConfig.PacketSize;
 
@@ -558,7 +558,7 @@ void model_net_base_configure_yaml()
   // - the init is a little easier as we can use the LP-id to look up the
   // annotation
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  auto parser = orchestrator.GetYAMLParser();
+  auto parser = orchestrator.GetConfigParser();
   auto& simConfig = parser->GetSimulationConfig();
   auto& lpConfigs = parser->GetLPTypeConfigs();
 

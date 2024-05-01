@@ -42,8 +42,7 @@ set(srcs
   models/pdes/routers/simplep2p.cxx
 
 # orchestrator
-  orchestrator/YAMLParser.cxx
-  orchestrator/GraphVizConfig.cxx
+  orchestrator/ConfigParser.cxx
   orchestrator/Orchestrator.cxx
 
 # util
@@ -95,8 +94,7 @@ set(headers
   models/pdes/routers/simplep2p.h
 
 # orchestrator
-  orchestrator/YAMLParser.h
-  orchestrator/GraphVizConfig.h
+  orchestrator/ConfigParser.h
   orchestrator/Orchestrator.h
 
 # util
@@ -118,7 +116,7 @@ if (CODES_HAVE_DUMPI)
 endif()
 
 if (CODES_HAVE_TORCH)
-    list(APPEND codes_deps ${TORCH_LIBRARIES})
+  list(APPEND codes_deps ${TORCH_LIBRARIES})
 endif()
 
 add_library(codes ${srcs})

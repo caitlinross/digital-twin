@@ -27,8 +27,4 @@
   X(CONGESTION_CONTROLLER, "congestion_controller", "congestion_controller", NULL)                 \
   X(MAX_NETS, NULL, NULL, NULL)
 
-// temporary to switch between the two config types.
-// one we can get rid of the old config completely, can remove this
-extern int UseYAMLConfig;
-
 #endif // !GLOBAL_DEFINES_H

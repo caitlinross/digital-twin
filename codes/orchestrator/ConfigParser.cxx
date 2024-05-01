@@ -8,8 +8,7 @@
 //
 //============================================================================
 
-#include "codes/orchestrator/YAMLParser.h"
-#include "codes/orchestrator/GraphVizConfig.h"
+#include "codes/orchestrator/ConfigParser.h"
 
 #include <ross.h>
 
@@ -25,7 +24,7 @@
 namespace codes
 {
 
-bool YAMLParser::ParseConfig(const std::string& configFile)
+bool ConfigParser::ParseConfig(const std::string& configFile)
 {
   std::filesystem::path yamlPath(configFile);
   if (!std::filesystem::exists(yamlPath))
@@ -113,31 +112,26 @@ bool YAMLParser::ParseConfig(const std::string& configFile)
     }
   }
 
-  this->GraphConfig.ParseConfig(this->DOTFileName);
+  this->ParseGraphVizConfig();
   return true;
 }
 
-std::string YAMLParser::GetParentPath()
+std::string ConfigParser::GetParentPath()
 {
   return this->ParentDir;
 }
 
-std::vector<LPTypeConfig>& YAMLParser::GetLPTypeConfigs()
+std::vector<LPTypeConfig>& ConfigParser::GetLPTypeConfigs()
 {
   return this->LPConfigs;
 }
 
-const SimulationConfig& YAMLParser::GetSimulationConfig()
+const SimulationConfig& ConfigParser::GetSimulationConfig()
 {
   return this->SimConfig;
 }
 
-GraphVizConfig& YAMLParser::GetGraphConfig()
-{
-  return this->GraphConfig;
-}
-
-void YAMLParser::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)
+void ConfigParser::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)
 {
   while (lpTypeIndex >= this->LPConfigs.size())
   {
@@ -181,6 +175,29 @@ void YAMLParser::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)
   {
     this->RecurseConfig(child, lpTypeIndex);
   }
+}
+
+void ConfigParser::ParseGraphVizConfig()
+{
+  if (!std::filesystem::exists(this->DOTFileName))
+  {
+    tw_error(TW_LOC, "the topology (DOT) file %s does not exist", this->DOTFileName.c_str());
+  }
+
+  // can't use ifstream since graphviz is a C lib
+  FILE* fp = fopen(this->DOTFileName.c_str(), "r");
+  // TODO: check for errors
+
+  this->Graph = agread(fp, 0);
+  if (!this->Graph)
+  {
+    tw_error(TW_LOC, "graph in file %s could not be read by GraphViz", this->DOTFileName.c_str());
+  }
+}
+
+Agraph_t* ConfigParser::GetGraph()
+{
+  return this->Graph;
 }
 
 } // end namespace codes

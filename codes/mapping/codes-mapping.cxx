@@ -17,8 +17,6 @@
 
 #define CODES_MAPPING_DEBUG 1
 
-int UseYAMLConfig = 0;
-
 /* number of LPs assigned to the current PE (abstraction of MPI rank).
  * for lp counts which are not divisible by the number of ranks, keep
  * modulus around */

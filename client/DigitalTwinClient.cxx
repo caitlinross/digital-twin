@@ -33,7 +33,6 @@ const tw_optdef AppOptions[] = { TWOPT_GROUP("CODES Digital Twin"),
 // code for every new type of simulation they want to do
 int main(int argc, char* argv[])
 {
-  UseYAMLConfig = 1;
   tw_opt_add(AppOptions);
   tw_init(&argc, &argv);
 

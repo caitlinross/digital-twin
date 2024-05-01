@@ -12,7 +12,7 @@
 #define CODES_ORCHESTRATOR_ORCHESTRATOR_H
 
 #include "codes/mapping/Mapper.h"
-#include "codes/orchestrator/YAMLParser.h"
+#include "codes/orchestrator/ConfigParser.h"
 
 #include <mpi.h>
 #include <ross.h>
@@ -52,7 +52,7 @@ public:
 
   std::vector<int> ModelNetConfigure(int& id_count);
 
-  std::shared_ptr<YAMLParser> GetYAMLParser();
+  std::shared_ptr<ConfigParser> GetConfigParser();
 
   std::shared_ptr<Mapper> GetMapper() { return this->_Mapper; }
 
@@ -77,7 +77,7 @@ private:
 
   const tw_lptype* LPTypeLookup(const std::string& name);
 
-  std::shared_ptr<YAMLParser> _YAMLParser;
+  std::shared_ptr<ConfigParser> Parser;
   std::shared_ptr<Mapper> _Mapper;
 };
 
