@@ -35,22 +35,10 @@ public:
    */
   static Orchestrator& GetInstance();
 
+  // TODO: add ability to set MPI_COMM_CODES. just have default be MPI_COMM_WORLD
   void ParseConfig(const std::string& configFileName);
 
-  // TODO add ability to set MPI_COMM_CODES. just have default be MPI_COMM_WORLD
-
-  bool ConfigureSimulation(const std::string& configFileName, MPI_Comm comm = MPI_COMM_WORLD);
-
-  bool IsSimulationConfigured();
-
-  // Register the LPs with model-net
-  void ModelNetRegister();
-
   void LPTypeRegister(const std::string& name, const tw_lptype* type);
-
-  void ModelNetBaseConfigure();
-
-  std::vector<int> ModelNetConfigure(int& id_count);
 
   std::shared_ptr<ConfigParser> GetConfigParser();
 
@@ -68,10 +56,6 @@ private:
   static bool Destroyed;
 
   MPI_Comm Comm;
-  std::string ConfigFileName;
-
-  bool SimulationConfigured = false;
-  std::vector<int> ConfiguredNetworks;
 
   std::map<std::string, const tw_lptype*> LPNameMap;
 

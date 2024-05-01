@@ -18,7 +18,6 @@
 #include <codes/orchestrator/Orchestrator.h>
 #include <codes/util/CodesUtils.h>
 
-#include <iostream>
 #include <memory>
 
 char config_file[1024] = "\0";
@@ -47,10 +46,8 @@ int main(int argc, char* argv[])
   auto& orchestrator = codes::Orchestrator::GetInstance();
 
   orchestrator.ParseConfig(config_file);
-  // this part will be removed once orchestrator is working
-  // configuration_load(argv[2], MPI_COMM_WORLD, &config);
 
-  // need to figure out how to add the correct LP types
+  // TODO: need to figure out how to add the correct LP types
   // though this will be done in the orchestrator
   SimpleServerAddLPType();
 
@@ -62,26 +59,19 @@ int main(int argc, char* argv[])
   // will need to rewrite this to work on my config
   model_net_register_yaml();
 
-  // says this loads the config file and sets up the number of LPs on each PE
-  // this is similar to the above, in that its dependent on lpconf
-  // these two functions will be replaced by functionality in the orchestrator
-  // codes_mapping_setup_yaml();
   auto mapper = orchestrator.GetMapper();
   mapper->MappingSetup();
 
   int num_nets;
   int* net_ids;
-  // similar here, dependent on old configuration stuff
-  // configures all model-net lps and returns the set of network ids
   net_ids = model_net_configure_yaml(&num_nets);
   // net_ids = orchestrator.ModelNetConfigure(num_nets);
   assert(num_nets == 1);
   int net_id = net_ids[0];
   SimpleServerSetNetId(net_id);
 
-  // also depends on config globals
-  // int num_servers = codes_mapping_get_lp_count_yaml("SimpleServer");
-  // assert(num_servers == 3);
+  int num_servers = mapper->GetLPTypeCount("SimpleServer");
+  assert(num_servers == 3);
 
   lp_io_handle handle;
   char name[15] = "modelnet-test\0";
