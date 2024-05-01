@@ -11,6 +11,10 @@
 #include "codes/orchestrator/YAMLParser.h"
 #include "codes/orchestrator/GraphVizConfig.h"
 
+#include <ross.h>
+
+#include <ross-extern.h>
+
 #include <c4/std/string.hpp>
 #include <ryml.hpp>
 #include <ryml_std.hpp>
@@ -24,15 +28,14 @@ namespace codes
 namespace orchestrator
 {
 
-YAMLParser::YAMLParser() {}
-
-void YAMLParser::ParseConfig(const std::string& configFile)
+bool YAMLParser::ParseConfig(const std::string& configFile)
 {
   std::filesystem::path yamlPath(configFile);
   if (!std::filesystem::exists(yamlPath))
   {
-    std::cout << "the config file " << configFile << " does not exist!" << std::endl;
+    tw_error(TW_LOC, "the config file %s does not exist", configFile.c_str());
   }
+
   this->ParentDir = yamlPath.parent_path();
   this->DOTFileName = this->ParentDir;
   this->DOTFileName += "/";
@@ -45,7 +48,6 @@ void YAMLParser::ParseConfig(const std::string& configFile)
   std::string yaml(length, ' ');
   ifs.read(&yaml[0], yaml.size());
   ifs.close();
-  // std::cout << "yaml:\n" << yaml << std::endl;
 
   // start parsing the file
   this->Tree = ryml::parse_in_arena(ryml::to_csubstr(yaml));
@@ -67,8 +69,7 @@ void YAMLParser::ParseConfig(const std::string& configFile)
   // handle the topology section
   if (!root["topology"].has_key() && !root["topology"].is_map())
   {
-    std::cout << "error: there should be a topology section in the config" << std::endl;
-    return;
+    tw_error(TW_LOC, "there should be a topology section in the yaml config");
   }
   for (ryml::ConstNodeRef const& child : root["topology"])
   {
@@ -77,7 +78,6 @@ void YAMLParser::ParseConfig(const std::string& configFile)
       if (child.key() == "filename")
       {
         this->DOTFileName += std::string(child.val().str, child.val().len);
-        std::cout << "DOT File: " << this->DOTFileName << std::endl;
       }
     }
   }
@@ -85,8 +85,7 @@ void YAMLParser::ParseConfig(const std::string& configFile)
   // handle the simulation config section
   if (!root["simulation"].has_key() && !root["simulation"].is_map())
   {
-    std::cout << "error: there should be a simulation section in the config" << std::endl;
-    return;
+    tw_error(TW_LOC, "there should be a simulation section in the yaml config");
   }
   for (ryml::ConstNodeRef const& child : root["simulation"])
   {
@@ -95,8 +94,7 @@ void YAMLParser::ParseConfig(const std::string& configFile)
       if (child.key() == "packet_size")
       {
         auto parseSuccessful = ryml::atoi(child.val(), &this->SimConfig.PacketSize);
-        // TODO error checking/defaults
-        std::cout << "packet size: " << this->SimConfig.PacketSize << std::endl;
+        // TODO: error checking/defaults
       }
       else if (child.key() == "modelnet_scheduler")
       {
@@ -105,7 +103,7 @@ void YAMLParser::ParseConfig(const std::string& configFile)
       else if (child.key() == "ross_message_size")
       {
         auto parseSuccessful = ryml::atoi(child.val(), &this->SimConfig.ROSSMessageSize);
-        // TODO error checking/defaults
+        // TODO: error checking/defaults
       }
       else if (child.key() == "net_latency_ns_file")
       {
@@ -119,6 +117,7 @@ void YAMLParser::ParseConfig(const std::string& configFile)
   }
 
   this->GraphConfig.ParseConfig(this->DOTFileName);
+  return true;
 }
 
 std::string YAMLParser::GetParentPath()
@@ -131,11 +130,6 @@ std::vector<LPTypeConfig>& YAMLParser::GetLPTypeConfigs()
   return this->LPConfigs;
 }
 
-std::vector<int>& YAMLParser::GetLPTypeConfigIndices()
-{
-  return this->LPTypeConfigIndices;
-}
-
 const SimulationConfig& YAMLParser::GetSimulationConfig()
 {
   return this->SimConfig;
@@ -144,11 +138,6 @@ const SimulationConfig& YAMLParser::GetSimulationConfig()
 GraphVizConfig& YAMLParser::GetGraphConfig()
 {
   return this->GraphConfig;
-}
-
-ryml::Tree& YAMLParser::GetYAMLTree()
-{
-  return this->Tree;
 }
 
 void YAMLParser::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)
@@ -182,7 +171,6 @@ void YAMLParser::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)
     for (int i = 0; i < root.num_children(); i++)
     {
       lpConfig.NodeNames[i] = std::string(root[i].val().str, root[i].val().len);
-      this->LPTypeConfigIndices.push_back(lpTypeIndex);
     }
   }
   else if (root.has_key() && root.is_map())

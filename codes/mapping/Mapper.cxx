@@ -11,6 +11,8 @@
 #include <mpi.h>
 #include <ross.h>
 
+#include <ross-extern.h>
+
 #include "codes/mapping/Mapper.h"
 #include "codes/model-net/lp-type-lookup.h"
 #include "codes/orchestrator/Orchestrator.h"
@@ -30,10 +32,11 @@
 namespace codes
 {
 
+// the following 3 functions are a little weird. we need to pass a function pointer to ROSS, but
+// we can't provide a pointer to a non-static member function.
+// So we use the orchestrator to get the mapping object and call the relevant method.
 void codesMappingInit()
 {
-  // a little weird, but we need to pass a function pointer to ROSS, but
-  // we can't provide a pointer to a non-static member function.
   auto& orchestrator = orchestrator::Orchestrator::GetInstance();
   auto self = orchestrator.GetMapper();
   self->MappingInit();
@@ -75,6 +78,7 @@ struct Node
   std::vector<std::weak_ptr<Node>> Connections;
 };
 
+// overridden so we can easily print config info when debugging
 std::ostream& operator<<(std::ostream& os, const Node& node)
 {
   os << "Node: \n"
@@ -91,6 +95,7 @@ std::ostream& operator<<(std::ostream& os, const Node& node)
   return os;
 }
 
+// given the name of a node, find out what index in the LPTypeConfig it is
 int findConfigIndex(
   const std::vector<orchestrator::LPTypeConfig>& lpConfigs, const std::string& nodeName)
 {
@@ -115,13 +120,11 @@ Mapper::Mapper(std::shared_ptr<orchestrator::YAMLParser> parser)
   const auto& lpConfigs = this->Parser->GetLPTypeConfigs();
   auto graph = this->Parser->GetGraphConfig().GetGraph();
 
-  auto& tree = this->Parser->GetYAMLTree();
-
   std::set<std::string> uniqueNodes;
   this->Nodes.resize(agnnodes(graph));
   int nodesIdx = 0;
 
-  this->FirstPassConfig();
+  this->MappingConfig();
   this->SetupConnections();
 
 #if CODES_MAPPER_DEBUG
@@ -135,7 +138,7 @@ Mapper::Mapper(std::shared_ptr<orchestrator::YAMLParser> parser)
 
 Mapper::~Mapper() = default;
 
-void Mapper::FirstPassConfig()
+void Mapper::MappingConfig()
 {
   // on our first pass through the graph, lets just create the Node objects along with setting their
   // global LP id. then on the next pass we can set up the connections
@@ -151,14 +154,11 @@ void Mapper::FirstPassConfig()
     // first check to see if we've already processed the node.
     // since we require an undirected graph, the first time we see/process
     // a node may be when it is seen as a connection of another node
-    // printf("Subraph name: %s\n", agnameof(sub));
     for (Agnode_t* v = agfstnode(sub); v; v = agnxtnode(sub, v))
     {
-      // printf("\tvertex: %s\n", agnameof(v));
       if (this->NodeNameToIdMap.count(agnameof(v)))
       {
         // we've processed this node already
-        // std::cout << "\t\t\twe've already processed this node. skipping" << std::endl;
         continue;
       }
       this->NodeNameToIdMap.insert(std::make_pair(agnameof(v), nodesIdx));
@@ -175,7 +175,7 @@ void Mapper::FirstPassConfig()
   // sanity check
   if (nodesIdx != this->Nodes.size())
   {
-    std::cerr << "ERROR: not all graph nodes were processed" << std::endl;
+    tw_error(TW_LOC, "not all graph nodes were processed");
   }
 }
 
@@ -185,18 +185,14 @@ void Mapper::ProcessEdges(Agraph_t* graph, Agnode_t* vertex, int& nodesIdx)
   for (Agedge_t* e = agfstout(graph, vertex); e; e = agnxtout(graph, e))
   {
     Agnode_t* connVertex = e->node;
-    // printf("\t\tconnected to node: %s\n", agnameof(e->node));
     //  now we need to create the node its connected to if it doesn't exist
     if (this->NodeNameToIdMap.count(agnameof(connVertex)) == 0)
     {
-      // std::cout << "creating connected node" << std::endl;
       this->NodeNameToIdMap.insert(std::make_pair(agnameof(connVertex), nodesIdx));
       auto connNode = std::make_shared<Node>();
       connNode->NodeName = agnameof(connVertex);
       connNode->GlobalId = nodesIdx;
       connNode->ConfigIdx = findConfigIndex(lpConfigs, connNode->NodeName);
-      // connNode->Connections.push_back(node);
-      // node->Connections.push_back(connNode);
       this->Nodes[nodesIdx] = connNode;
       nodesIdx++;
     }
@@ -217,25 +213,20 @@ void Mapper::SetupConnections()
   {
     if (this->NodeNameToIdMap.count(agnameof(v)) == 0)
     {
-      // TODO: ERROR
+      tw_error(TW_LOC, "node %s does not exist in the NodeNameToIdMap", agnameof(v));
     }
     auto vertexNode = this->Nodes[this->NodeNameToIdMap[agnameof(v)]];
-    // this will get us the name that is used in the config
-    printf("vertex: %s\n", agnameof(v));
     for (Agedge_t* e = agfstout(graph, v); e; e = agnxtout(graph, e))
     {
       // instead need to figure out who each vertex is attached to
-      printf("\tconnected to node: %s\n", agnameof(e->node));
-      if (this->NodeNameToIdMap.count(agnameof(e->node)))
+      if (!this->NodeNameToIdMap.count(agnameof(e->node)))
       {
-        // TODO: ERROR
+        tw_error(TW_LOC, "node %s does not exist in the NodeNameToIdMap", agnameof(e->node));
       }
 
       auto connNode = this->Nodes[this->NodeNameToIdMap[agnameof(e->node)]];
       vertexNode->Connections.push_back(connNode);
       connNode->Connections.push_back(vertexNode);
-      // I think we can use this to create our own simplified C++ version of
-      // all of this, keeping only the info that we need
     }
   }
 }
@@ -377,7 +368,6 @@ void Mapper::MappingInit()
       st_model_settype(ross_lid, (st_model_types*)trace_type);
     }
   }
-  return;
 }
 
 /* This function takes the global LP ID, maps it to the local LP ID and returns the LP
@@ -404,7 +394,6 @@ int Mapper::GetLPTypeCount(const std::string& lp_type_name)
       count += conf.NodeNames.size();
     }
   }
-  std::cout << "num of " << lp_type_name << " lps: " << count << std::endl;
   return count;
 }
 
@@ -419,7 +408,7 @@ tw_lpid Mapper::GetLPId(const std::string& lp_type_name, int offset)
       auto lpNodeName = config.NodeNames[offset];
       if (this->NodeNameToIdMap.count(lpNodeName) == 0)
       {
-        // TODO: error
+        tw_error(TW_LOC, "the node %s could not be found in NodeNameToIdMap", lpNodeName.c_str());
       }
       return this->NodeNameToIdMap[lpNodeName];
     }
@@ -441,17 +430,14 @@ int Mapper::GetRelativeLPId(tw_lpid gid)
   {
     if (node->NodeName == lpConfig.NodeNames[i])
     {
-      std::cout << "gid " << gid << " relative id is " << i << std::endl;
       return i;
     }
   }
-  // TODO: error that shouldn't be possible
-  return -1;
+  tw_error(TW_LOC, "was not able to determine the relative LP id for LP %d", gid);
 }
 
 tw_lpid Mapper::GetDestinationLPId(tw_lpid sender_gid, const std::string& dest_lp_name, int offset)
 {
-  //
   auto senderNode = this->Nodes[sender_gid];
   auto conn = senderNode->Connections[offset];
   auto ptr = conn.lock();
@@ -459,8 +445,10 @@ tw_lpid Mapper::GetDestinationLPId(tw_lpid sender_gid, const std::string& dest_l
   {
     return ptr->GlobalId;
   }
-  // TODO: error
-  return -1;
+  tw_error(TW_LOC,
+    "for sending LP %d, could not determine the gid of the destination LP with name %s and offset "
+    "%d",
+    sender_gid, dest_lp_name.c_str(), offset);
 }
 
 std::string Mapper::GetLPTypeName(tw_lpid gid)
@@ -484,7 +472,6 @@ int Mapper::GetDestinationLPCount(tw_lpid sender_gid, const std::string& dest_lp
     }
   }
 
-  std::cout << "there are " << count << " possible destinations" << std::endl;
   return count;
 }
 

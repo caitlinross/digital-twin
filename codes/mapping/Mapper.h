@@ -37,8 +37,8 @@ public:
   ~Mapper();
 
   /**
-   * Using the YAML, determine the number of LPs on each PE
-   * Currently it's just based on the order the LPs are defined in the YAML file,
+   * Using the YAML and GraphViz graph, determine the number of LPs on each PE
+   * Currently it's just based on the order the LPs are defined in the DOT file,
    * since we're currently just working with very small networks and will be
    * running serially. To run in parallel, we could use the info from
    * the graph to also better provide a better partitioning across ranks.
@@ -47,10 +47,13 @@ public:
   void MappingSetup(int offset);
 
   /**
-   * Provided to ROSS to set up the initial mapping
+   * Provided to ROSS to set up the initial mapping of LPs to their KP and PE
    */
   void MappingInit();
 
+  /**
+   * Returns the pointer to the LP of the given global id
+   */
   tw_lp* MappingToLP(tw_lpid lpid);
 
   /**
@@ -72,7 +75,12 @@ public:
    * Calculates the global LP Id given the identifying info
    */
   tw_lpid GetLPId(const std::string& lp_type_name, int offset);
-  tw_lpid GetDestinationLPId(tw_lpid gid, const std::string& lp_typeName, int offset);
+
+  /**
+   * Given a sender's global id, the name of its destination and an offset into its connections,
+   * get the global id of the destination LP
+   */
+  tw_lpid GetDestinationLPId(tw_lpid sender_gid, const std::string& dest_lp_name, int offset);
 
   /**
    * Calculates the LP id relative to the other LPs of its type
@@ -80,8 +88,14 @@ public:
    */
   int GetRelativeLPId(tw_lpid gid);
 
+  /**
+   * Get the LP config name of LP gid
+   */
   std::string GetLPTypeName(tw_lpid gid);
 
+  /**
+   * returns the number of potential destination LPs of dest_lp_name for sending LP sender_gid
+   */
   int GetDestinationLPCount(tw_lpid sender_gid, const std::string& dest_lp_name);
 
 private:
@@ -103,7 +117,7 @@ private:
 
   int MemFactor = 256;
 
-  void FirstPassConfig();
+  void MappingConfig();
 
   void SetupConnections();
 

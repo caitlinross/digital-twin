@@ -43,36 +43,46 @@ struct SimulationConfig
 {
   int PacketSize;
   int ROSSMessageSize;
-  // TODO prob switch to enum?
   std::string ModelNetScheduler;
   std::string LatencyFileName;
   std::string BandwidthFileName;
 };
 
+/**
+ * Handles parsing the yaml config file.
+ */
 class YAMLParser
 {
 public:
-  YAMLParser();
+  /**
+   * Parses the configFile
+   */
+  bool ParseConfig(const std::string& configFile);
 
-  void ParseConfig(const std::string& configFile);
-
+  /**
+   * Returns the directory containing the yaml file
+   */
   std::string GetParentPath();
 
+  /**
+   * returns the configuration for all lp types
+   */
   std::vector<LPTypeConfig>& GetLPTypeConfigs();
-  std::vector<int>& GetLPTypeConfigIndices();
-  const SimulationConfig& GetSimulationConfig();
-  ryml::Tree& GetYAMLTree();
 
+  /**
+   * Returns the general simulation settings
+   */
+  const SimulationConfig& GetSimulationConfig();
+
+  /**
+   * returns the graph viz parser
+   */
   GraphVizConfig& GetGraphConfig();
 
 private:
-  std::string YamlString;
   std::string DOTFileName;
 
   std::vector<LPTypeConfig> LPConfigs;
-  // this is an index into this->LPConfigs
-  // this is an LPs local id mapped to its LP type
-  std::vector<int> LPTypeConfigIndices;
 
   SimulationConfig SimConfig;
 
