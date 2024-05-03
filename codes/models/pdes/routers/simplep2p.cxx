@@ -5,12 +5,9 @@
  */
 
 #include <assert.h>
-// #include <ross-types.h>
 #include <ross.h>
 #include <string.h>
 
-#include "codes/GlobalDefines.h"
-#include "codes/mapping/codes-mapping.h"
 #include "codes/model-net/codes.h"
 #include "codes/model-net/model-net-lp.h"
 #include "codes/model-net/model-net-method.h"
@@ -353,18 +350,10 @@ static void sp_init(sp_state* ns, tw_lp* lp)
   sp_magic = h1 + h2;
   /* printf("\n sp_magic %d ", sp_magic); */
 
-  // ns->anno = codes_mapping_get_annotation_by_lpid(lp->gid);
   ns->anno = nullptr;
-  if (ns->anno == NULL)
-    ns->params = &all_params[num_params - 1];
-  else
-  {
-    int id = configuration_get_annotation_index(ns->anno, anno_map);
-    ns->params = &all_params[id];
-  }
+  ns->params = &all_params[num_params - 1];
 
   /* inititalize global logical ID w.r.t. annotation */
-  // ns->id = codes_mapping_get_lp_relative_id(lp->gid, 0, 1);
   auto mapper = codes::Orchestrator::GetInstance().GetMapper();
   ns->id = mapper->GetRelativeLPId(lp->gid);
 

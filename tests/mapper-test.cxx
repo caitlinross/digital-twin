@@ -24,9 +24,6 @@ static void init(state* ns, tw_lp* lp)
   auto mapper = orchestrator.GetMapper();
 
   ns->lp_name = mapper->GetLPTypeName(lp->gid);
-
-  // TODO: add in a bunch of checks to get different info from the mapper and then compare it to the
-  // correct values
 }
 
 tw_lptype a_lp = {

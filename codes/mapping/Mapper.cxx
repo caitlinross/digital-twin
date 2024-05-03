@@ -457,6 +457,24 @@ int Mapper::GetRelativeLPId(tw_lpid gid)
   tw_error(TW_LOC, "was not able to determine the relative LP id for LP %d", gid);
 }
 
+tw_lpid Mapper::GetLPIdFromRelativeId(int rel_id, const std::string& lp_type_name)
+{
+  for (auto& lpConfig : this->Parser->GetLPTypeConfigs())
+  {
+    if (lpConfig.ModelName == lp_type_name)
+    {
+      auto& nodeName = lpConfig.NodeNames[rel_id];
+      if (this->NodeNameToIdMap.count(nodeName))
+      {
+        return this->NodeNameToIdMap[nodeName];
+      }
+      break;
+    }
+  }
+  tw_error(
+    TW_LOC, "could not find lpid for lp type %s with relative id %d", lp_type_name.c_str(), rel_id);
+}
+
 tw_lpid Mapper::GetDestinationLPId(tw_lpid sender_gid, const std::string& dest_lp_name, int offset)
 {
   auto senderNode = this->Nodes[sender_gid].get();
@@ -487,6 +505,16 @@ int Mapper::GetDestinationLPCount(tw_lpid sender_gid, const std::string& dest_lp
   }
 
   return count;
+}
+
+int Mapper::GetNumberUniqueLPTypes()
+{
+  return this->Parser->GetLPTypeConfigs().size();
+}
+
+std::string Mapper::GetLPTypeNameByTypeId(int id)
+{
+  return this->Parser->GetLPTypeConfigs()[id].ModelName;
 }
 
 } // end namespace codes

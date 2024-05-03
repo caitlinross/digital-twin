@@ -9,7 +9,6 @@
 
 #include <ross.h>
 
-#include "codes/mapping/codes-mapping.h"
 #include "codes/model-net/codes.h"
 #include "codes/model-net/model-net-lp.h"
 #include "codes/model-net/model-net-method.h"
@@ -498,7 +497,8 @@ static model_net_event_return model_net_event_impl_base(int net_id,
     struct codes_jobmap_ctx* ctx;
     ctx = congestion_control_get_jobmap();
     struct codes_jobmap_id jid;
-    jid = codes_jobmap_to_local_id(codes_mapping_get_lp_relative_id(sender->gid, 0, 0), ctx);
+    auto mapper = codes::Orchestrator::GetInstance().GetMapper();
+    jid = codes_jobmap_to_local_id(mapper->GetRelativeLPId(sender->gid), ctx);
     r->app_id = jid.job;
   }
   // this is an outgoing message

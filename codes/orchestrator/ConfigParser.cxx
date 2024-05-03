@@ -109,6 +109,16 @@ bool ConfigParser::ParseConfig(const std::string& configFile)
       {
         this->SimConfig.BandwidthFileName = std::string(child.val().str, child.val().len);
       }
+      else if (child.key() == "net_startup_ns")
+      {
+        auto parseSuccessful = ryml::atod(child.val(), &this->SimConfig.NetworkStartupNS);
+        // TODO: error checking/defaults
+      }
+      else if (child.key() == "net_bw_mbps")
+      {
+        auto parseSuccessful = ryml::atoi(child.val(), &this->SimConfig.NetworkBandwidthMbps);
+        // TODO: error checking/defaults
+      }
     }
   }
 

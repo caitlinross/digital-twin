@@ -43,8 +43,17 @@ struct SimulationConfig
   int PacketSize;
   int ROSSMessageSize;
   std::string ModelNetScheduler;
+
+  // TODO: maybe should store these differently, so that when
+  // a model asks for a value, it can determine that it was actually set and we're not just
+  // using a bad value
+  // for simplep2p
   std::string LatencyFileName;
   std::string BandwidthFileName;
+
+  // for simplenet
+  double NetworkStartupNS;
+  int NetworkBandwidthMbps;
 };
 
 /**

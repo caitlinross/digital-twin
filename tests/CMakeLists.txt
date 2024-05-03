@@ -3,8 +3,6 @@ target_link_libraries(lp-io-test PRIVATE CODES::CODES)
 add_test(NAME lp-io-test
     COMMAND lp-io-test --sync=1)
 
-add_executable(simplep2p-test modelnet-simplep2p-test.c)
-target_link_libraries(simplep2p-test PUBLIC CODES::CODES)
 add_test(NAME simplep2p-test
       COMMAND codes-digital-twin --sync=1
       --config-file=${CMAKE_CURRENT_SOURCE_DIR}/conf/simplep2p-test.yaml

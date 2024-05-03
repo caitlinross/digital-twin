@@ -117,11 +117,6 @@ extern "C"
   tw_lpid codes_mctx_to_lpid(
     struct codes_mctx const* ctx, char const* dest_lp_name, tw_lpid sender_gid);
 
-  /* helper function to extract which annotation a various map context maps to.
-   * annotation is allocated or NULL if unused */
-  char const* codes_mctx_get_annotation(
-    struct codes_mctx const* ctx, char const* dest_lp_name, tw_lpid sender_id);
-
 #ifdef __cplusplus
 }
 #endif

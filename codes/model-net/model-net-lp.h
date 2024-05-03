@@ -20,12 +20,11 @@ extern "C"
 {
 #endif
 
-#include "codes/mapping/codes-mapping.h"
 #include "codes/model-net/congestion-controller-core.h"
 #include "codes/model-net/lp-msg.h"
 #include "codes/model-net/model-net-sched.h"
 #include "codes/model-net/model-net.h"
-#include "codes/model-net/simplenet-upd.h"
+#include "codes/models/pdes/routers/simplenet-upd.h"
 #include "codes/models/pdes/routers/simplep2p.h"
 
   extern int model_net_base_magic;

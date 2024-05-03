@@ -91,6 +91,7 @@ public:
    * Returned id is value from 0 to N-1, where n is the number of LPs of the same type
    */
   int GetRelativeLPId(tw_lpid gid);
+  tw_lpid GetLPIdFromRelativeId(int rel_id, const std::string& lp_type_name);
 
   /**
    * Given a sender's global id, the name of its destination and an offset into its connections,
@@ -102,6 +103,10 @@ public:
    * returns the number of potential destination LPs of dest_lp_name for sending LP sender_gid
    */
   int GetDestinationLPCount(tw_lpid sender_gid, const std::string& dest_lp_name);
+
+  int GetNumberUniqueLPTypes();
+
+  std::string GetLPTypeNameByTypeId(int id);
 
 private:
   // perhaps this will get the yaml parser and stuff, and then use that to

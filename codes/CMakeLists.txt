@@ -20,7 +20,6 @@ set(srcs
   mapping/Mapper.cxx
   mapping/codes-jobmap.c
   mapping/codes-mapping-context.cxx
-  mapping/codes-mapping.cxx
   mapping/jobmap-dummy.c
   mapping/jobmap-identity.c
   mapping/jobmap-list.c
@@ -35,10 +34,10 @@ set(srcs
   model-net/model-net-sched-impl.c
   model-net/model-net-sched.c
   model-net/model-net.cxx
-  model-net/simplenet-upd.c
 
 # models
   models/pdes/hosts/SimpleServer.cxx
+  models/pdes/routers/simplenet-upd.cxx
   models/pdes/routers/simplep2p.cxx
 
 # orchestrator
@@ -73,7 +72,6 @@ set(headers
   mapping/codes-jobmap-method-impl.h
   mapping/codes-jobmap.h
   mapping/codes-mapping-context.h
-  mapping/codes-mapping.h
 
 # model-net
   model-net/codes.h
@@ -87,10 +85,10 @@ set(headers
   model-net/model-net-sched-impl.h
   model-net/model-net-sched.h
   model-net/model-net.h
-  model-net/simplenet-upd.h
 
 # models
   models/pdes/hosts/SimpleServer.h
+  models/pdes/routers/simplenet-upd.h
   models/pdes/routers/simplep2p.h
 
 # orchestrator

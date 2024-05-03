@@ -5,7 +5,6 @@
  */
 
 #include <assert.h>
-#include <cmath>
 #include <cstring>
 #include <stddef.h>
 
@@ -816,19 +815,9 @@ void handle_new_msg(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg* m, t
   static int servers_per_node = -1;
   if (num_servers == -1)
   {
-    char const* sender_group;
-    std::string sender_lpname;
-    int rep_id, offset;
     model_net_request* r = &m->msg.m_base.req;
-    sender_lpname = mapper->GetLPTypeName(r->src_lp);
-    // so this is how many servers we're connected to, not total number of servers in the sim
-    // so we'll need the graph info for this
-    // TODO: fix
-    num_servers = 1; // mapper->GetLPCount(sender_lpname);
-    // codes_mapping_get_lp_info2(r->src_lp, &sender_group, &sender_lpname, NULL,
-    // &rep_id, &offset);
-    // num_servers = codes_mapping_get_lp_count(sender_group, 1,
-    // sender_lpname, NULL, 1);
+    std::string lp_name = mapper->GetLPTypeName(lp->gid);
+    num_servers = mapper->GetDestinationLPCount(r->src_lp, lp_name);
     servers_per_node = num_servers / ns->params->num_queues; // this is for entire switch
     if (servers_per_node == 0)
       servers_per_node = 1;
@@ -848,9 +837,8 @@ void handle_new_msg(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg* m, t
   if (lp->gid == m->msg.m_base.req.dest_mn_lp)
   {
     model_net_request* r = &m->msg.m_base.req;
-    int rep_id, offset;
-    // TODO:
-    // codes_mapping_get_lp_info2(r->src_lp, NULL, NULL, NULL, &rep_id, &offset);
+    // FIXME: need to figure out what offset should be here
+    int offset = 0;
     int queue = offset / ns->nics_per_router / servers_per_node_queue;
     m->msg.m_base.save_ts = ns->node_copy_next_available_time[queue];
     tw_stime exp_time = ((ns->node_copy_next_available_time[queue] > tw_now(lp))
@@ -934,20 +922,15 @@ void handle_new_msg(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg* m, t
   int queue_offset = 0;
   if (!m->msg.m_base.is_from_remote && ns->params->num_queues != 1)
   {
-    int rep_id, offset;
+    // FIXME: need to figure out what offset should be here
+    int offset = 0;
+    std::string lp_name = mapper->GetLPTypeName(lp->gid);
     if (num_servers == -1)
     {
-      char const* sender_group;
-      char const* sender_lpname;
-      codes_mapping_get_lp_info2(r->src_lp, &sender_group, &sender_lpname, NULL, &rep_id, &offset);
-      num_servers = codes_mapping_get_lp_count(sender_group, 1, sender_lpname, NULL, 1);
+      num_servers = mapper->GetDestinationLPCount(r->src_lp, lp_name);
       servers_per_node = num_servers / ns->params->num_queues;
       if (servers_per_node == 0)
         servers_per_node = 1;
-    }
-    else
-    {
-      codes_mapping_get_lp_info2(r->src_lp, NULL, NULL, NULL, &rep_id, &offset);
     }
 #if DEBUG
     printf("r->src_lp:%llu, num_servers:%d num_queues:%d, offset:%d servers_per_node:%d\n",
@@ -995,8 +978,8 @@ void handle_new_msg_rc(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg* m
   {
     codes_local_latency_reverse(lp);
     model_net_request* r = &m->msg.m_base.req;
-    int rep_id, offset;
-    codes_mapping_get_lp_info2(r->src_lp, NULL, NULL, NULL, &rep_id, &offset);
+    // FIXME: offset?
+    int offset = 0;
     int queue = offset / ns->nics_per_router / servers_per_node_queue;
     ns->node_copy_next_available_time[queue] = m->msg.m_base.save_ts;
     return;
@@ -1184,18 +1167,18 @@ int model_net_method_end_sim_broadcast(tw_stime offset_ts, tw_lp* sender)
 {
   // get lp names of active model-net LPs
   // send end sim notification to each LP that match an active model-net lp name
-  for (int cid = 0; cid < lpconf.num_uniq_lptypes; cid++)
+  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
+  for (int cid = 0; cid < mapper->GetNumberUniqueLPTypes(); cid++)
   {
-    const char* lp_name = codes_mapping_get_lp_name_by_cid(cid);
+    auto lp_name = mapper->GetLPTypeNameByTypeId(cid);
     for (int n = 0; n < MAX_NETS; n++)
     {
-      if (strcmp(lp_name, model_net_lp_config_names[n]) == 0)
+      if (lp_name == model_net_lp_config_names[n])
       {
         // printf("ACTIVE TYPE FOUND: %s\n", lp_name);
-        for (int lid = 0; lid < codes_mapping_get_lp_count("MODELNET_GRP", 0, lp_name, NULL, 1);
-             lid++)
+        for (int lid = 0; lid < mapper->GetLPTypeCount(lp_name); lid++)
         {
-          tw_lpid lpgid = codes_mapping_get_lpid_from_relative(lid, NULL, lp_name, NULL, 0);
+          tw_lpid lpgid = mapper->GetLPIdFromRelativeId(lid, lp_name);
           tw_event* e = model_net_method_end_sim_notification(lpgid, offset_ts, sender);
           tw_event_send(e);
         }

@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
   SimpleServerAddLPType();
 
   // registers all model-net lps in ross. should be called after configuring, but
-  // before codes_mapping_setup()
+  // before the mapping setup
   // for this I need to add the lps to the NETWORK_DEF in model-net.h
   // also this relies on a global variable lpconf from configuration.h
   // so it's heavliy dependent on that.
