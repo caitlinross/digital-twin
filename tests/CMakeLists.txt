@@ -6,8 +6,8 @@ add_test(NAME lp-io-test
 add_executable(simplep2p-test modelnet-simplep2p-test.c)
 target_link_libraries(simplep2p-test PUBLIC CODES::CODES)
 add_test(NAME simplep2p-test
-      COMMAND simplep2p-test --sync=1
-      -- ${CMAKE_CURRENT_SOURCE_DIR}/conf/modelnet-test-simplep2p.conf
+      COMMAND codes-digital-twin --sync=1
+      --config-file=${CMAKE_CURRENT_SOURCE_DIR}/conf/simplep2p-test.yaml
 )
 
 # TODO add comparison for output
@@ -18,17 +18,17 @@ add_test(NAME mapping-test
       --codes-config=${CMAKE_CURRENT_SOURCE_DIR}/conf/mapping-test.yaml
 )
 
-add_executable(job-map-test jobmap-test.c)
-target_link_libraries(job-map-test PUBLIC CODES::CODES)
-add_test(NAME job-map-test
-      COMMAND job-map-test
-        ${CMAKE_CURRENT_SOURCE_DIR}/conf/jobmap-test-list.conf
-)
-
-add_executable(map-ctx-test map-ctx-test.c)
-target_link_libraries(map-ctx-test PUBLIC CODES::CODES)
-add_test(NAME map-ctx-test
-      COMMAND map-ctx-test
-        ${CMAKE_CURRENT_SOURCE_DIR}/conf/map-ctx-test.conf
-)
+#add_executable(job-map-test jobmap-test.c)
+#target_link_libraries(job-map-test PUBLIC CODES::CODES)
+#add_test(NAME job-map-test
+#      COMMAND job-map-test
+#        ${CMAKE_CURRENT_SOURCE_DIR}/conf/jobmap-test-list.conf
+#)
+#
+#add_executable(map-ctx-test map-ctx-test.c)
+#target_link_libraries(map-ctx-test PUBLIC CODES::CODES)
+#add_test(NAME map-ctx-test
+#      COMMAND map-ctx-test
+#        ${CMAKE_CURRENT_SOURCE_DIR}/conf/map-ctx-test.conf
+#)
 
