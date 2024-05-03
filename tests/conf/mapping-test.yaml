@@ -1,0 +1,23 @@
+# this example mimics the mapping test in codes
+# although currently annotations are not supported
+a_config:
+  type: host
+  model: a 
+  node_ids: [a0, a1, a2, a3, a4, a5, a6]
+
+b_config:
+  type: host 
+  model: b
+  node_ids: [b0, b1, b2, b3, b4, b5, b6]
+
+c_config:
+  type: host 
+  model: c
+  node_ids: [c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11]
+
+
+simulation:
+  ross_message_size: 312
+
+topology:
+  filename: "mapping-test-topology.dot"

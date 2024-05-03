@@ -9,7 +9,10 @@
 //============================================================================
 
 #include <mpi.h>
+
 #include <ross.h>
+
+#include <ross-extern.h>
 
 #include "codes/mapping/Mapper.h"
 #include "codes/model-net/lp-type-lookup.h"
@@ -71,8 +74,6 @@ struct Node
   // For now, we'll store pointers to the nodes we're connected to in
   // a vector. Maybe we'll want to change this in the future, but should be
   // fine for now.
-  // I think these need to be weak_ptrs so we don't get cyclical references
-  // that will never be freed
   std::vector<Node*> Connections;
 };
 
@@ -224,30 +225,6 @@ void Mapper::SetupConnections()
   }
 }
 
-int Mapper::GetLPsForPE()
-{
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#if CODES_MAPPER_DEBUG
-  std::cout << this->LPsPerPEFloor + (static_cast<tw_lpid>(g_tw_mynode) < this->LPsLeftover)
-            << " lps for rank " << rank << std::endl;
-#endif
-  return this->LPsPerPEFloor + (static_cast<tw_lpid>(g_tw_mynode) < this->LPsLeftover);
-}
-
-tw_peid Mapper::GlobalMapping(tw_lpid gid)
-{
-  tw_lpid lps_on_pes_with_leftover = this->LPsLeftover * (this->LPsPerPEFloor + 1);
-  if (gid < lps_on_pes_with_leftover)
-  {
-    return gid / (this->LPsPerPEFloor + 1);
-  }
-  else
-  {
-    return (gid - lps_on_pes_with_leftover) / this->LPsPerPEFloor + this->LPsLeftover;
-  }
-}
-
 void Mapper::MappingSetup(int offset)
 {
   int grp, lpt, message_size;
@@ -363,6 +340,30 @@ void Mapper::MappingInit()
   }
 }
 
+tw_peid Mapper::GlobalMapping(tw_lpid gid)
+{
+  tw_lpid lps_on_pes_with_leftover = this->LPsLeftover * (this->LPsPerPEFloor + 1);
+  if (gid < lps_on_pes_with_leftover)
+  {
+    return gid / (this->LPsPerPEFloor + 1);
+  }
+  else
+  {
+    return (gid - lps_on_pes_with_leftover) / this->LPsPerPEFloor + this->LPsLeftover;
+  }
+}
+
+int Mapper::GetLPsForPE()
+{
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#if CODES_MAPPER_DEBUG
+  std::cout << this->LPsPerPEFloor + (static_cast<tw_lpid>(g_tw_mynode) < this->LPsLeftover)
+            << " lps for rank " << rank << std::endl;
+#endif
+  return this->LPsPerPEFloor + (static_cast<tw_lpid>(g_tw_mynode) < this->LPsLeftover);
+}
+
 /* This function takes the global LP ID, maps it to the local LP ID and returns the LP
  * lps have global and local LP IDs
  * global LP IDs are unique across all PEs, local LP IDs are unique within a PE */
@@ -371,6 +372,33 @@ tw_lp* Mapper::MappingToLP(tw_lpid lpid)
   int index = lpid - (g_tw_mynode * this->LPsPerPEFloor) -
               std::min(static_cast<tw_lpid>(g_tw_mynode), this->LPsLeftover);
   return g_tw_lp[index];
+}
+
+void Mapper::GetLPTypeInfo(tw_lpid gid, std::string& lp_type_name, int& offset)
+{
+  auto configIdx = this->Nodes[gid]->ConfigIdx;
+  auto& lpConfig = this->Parser->GetLPTypeConfigs()[configIdx];
+  lp_type_name = lpConfig.ModelName;
+  offset = -1;
+  for (int i = 0; i < lpConfig.NodeNames.size(); i++)
+  {
+    if (lpConfig.NodeNames[i] == this->Nodes[gid]->NodeName)
+    {
+      offset = i;
+      break;
+    }
+  }
+
+  if (offset == -1)
+  {
+    tw_error(TW_LOC, "could not find the offset for lp gid %d", gid);
+  }
+}
+
+std::string Mapper::GetLPTypeName(tw_lpid gid)
+{
+  auto configIdx = this->Nodes[gid]->ConfigIdx;
+  return this->Parser->GetLPTypeConfigs()[configIdx].ModelName;
 }
 
 int Mapper::GetLPTypeCount(const std::string& lp_type_name)
@@ -442,12 +470,6 @@ tw_lpid Mapper::GetDestinationLPId(tw_lpid sender_gid, const std::string& dest_l
       sender_gid, dest_lp_name.c_str(), offset);
   }
   return conn->GlobalId;
-}
-
-std::string Mapper::GetLPTypeName(tw_lpid gid)
-{
-  auto configIdx = this->Nodes[gid]->ConfigIdx;
-  return this->Parser->GetLPTypeConfigs()[configIdx].ModelName;
 }
 
 int Mapper::GetDestinationLPCount(tw_lpid sender_gid, const std::string& dest_lp_name)

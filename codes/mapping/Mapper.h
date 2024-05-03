@@ -51,9 +51,9 @@ public:
   void MappingInit();
 
   /**
-   * Returns the pointer to the LP of the given global id
+   * Given a global LP ID, return the rank/PE it belongs to
    */
-  tw_lp* MappingToLP(tw_lpid lpid);
+  tw_peid GlobalMapping(tw_lpid gid);
 
   /**
    * Returns the number of LPs on this PE
@@ -61,9 +61,19 @@ public:
   int GetLPsForPE();
 
   /**
-   * Given a global LP ID, return the rank/PE it belongs to
+   * Returns the pointer to the LP of the given global id
    */
-  tw_peid GlobalMapping(tw_lpid gid);
+  tw_lp* MappingToLP(tw_lpid lpid);
+
+  /**
+   * Get the LP config name and offset for LP with the given gid
+   */
+  void GetLPTypeInfo(tw_lpid gid, std::string& lp_type_name, int& offset);
+
+  /**
+   * Get the LP config name of LP gid
+   */
+  std::string GetLPTypeName(tw_lpid gid);
 
   /**
    * Calculates the count for LPs of the given type
@@ -72,14 +82,9 @@ public:
 
   /**
    * Calculates the global LP Id given the identifying info
+   * offset is the offset in the node_ids list for this config type
    */
   tw_lpid GetLPId(const std::string& lp_type_name, int offset);
-
-  /**
-   * Given a sender's global id, the name of its destination and an offset into its connections,
-   * get the global id of the destination LP
-   */
-  tw_lpid GetDestinationLPId(tw_lpid sender_gid, const std::string& dest_lp_name, int offset);
 
   /**
    * Calculates the LP id relative to the other LPs of its type
@@ -88,9 +93,10 @@ public:
   int GetRelativeLPId(tw_lpid gid);
 
   /**
-   * Get the LP config name of LP gid
+   * Given a sender's global id, the name of its destination and an offset into its connections,
+   * get the global id of the destination LP
    */
-  std::string GetLPTypeName(tw_lpid gid);
+  tw_lpid GetDestinationLPId(tw_lpid sender_gid, const std::string& dest_lp_name, int offset);
 
   /**
    * returns the number of potential destination LPs of dest_lp_name for sending LP sender_gid

@@ -1,5 +1,4 @@
-# this example will be a simple network of two routers with the simplep2p config
-# with one router connected to 2 hosts and the other connected to 3 hosts
+# this example mimics the simplep2p test in codes
 router_config0:
   type: router
   model: modelnet_simplep2p

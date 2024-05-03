@@ -11,11 +11,11 @@ add_test(NAME simplep2p-test
 )
 
 # TODO add comparison for output
-add_executable(mapping-test mapping-test.c)
+add_executable(mapping-test mapper-test.cxx)
 target_link_libraries(mapping-test PUBLIC CODES::CODES)
 add_test(NAME mapping-test
       COMMAND mapping-test --sync=1
-      --codes-config=${CMAKE_CURRENT_SOURCE_DIR}/conf/mapping-test.conf
+      --codes-config=${CMAKE_CURRENT_SOURCE_DIR}/conf/mapping-test.yaml
 )
 
 add_executable(job-map-test jobmap-test.c)

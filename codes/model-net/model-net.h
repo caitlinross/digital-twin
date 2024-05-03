@@ -7,14 +7,14 @@
 #ifndef MODELNET_H
 #define MODELNET_H
 
+#include <ross.h>
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 #include <stdint.h>
-
-#include <ross.h>
 
 #include "codes/GlobalDefines.h"
 #include "codes/config/configuration.h"

@@ -88,10 +88,13 @@ struct codes_mctx codes_mctx_set_group_direct(
 // so for instance our workload lp is sending to another workload lp, so this is
 // used to figure out which model net lp we send to, and which modelnet lp will send
 // to our destination
+// based on model-net.h, I'm pretty sure this is only used for getting from a terminal
+// to a model-net lp.
 tw_lpid codes_mctx_to_lpid(
   struct codes_mctx const* ctx, char const* dest_lp_name, tw_lpid sender_gid)
 {
   // TODO: this is only handled for modulo
+  // TODO: need to handle annotations as well
   struct codes_mctx_annotation const* anno;
   // short circuit for direct mappings
   switch (ctx->type)
@@ -113,20 +116,14 @@ tw_lpid codes_mctx_to_lpid(
       assert(0);
   }
 
-  char const* sender_group;
-  char const* sender_lpname;
-  int rep_id, offset = 0;
+  // I think offset can just be 0, at least in the situations we are currently planning to handle.
+  // since this is only used when sender is a terminal and dest lp is some kind of model-net lp.
+  // we will assume for now that a terminal is only connected to one router
+  int offset = 0;
 
   // get sender info
-  // codes_mapping_get_lp_info2(sender_gid, &sender_group, &sender_lpname, NULL, &rep_id, &offset);
   auto mapper = codes::Orchestrator::GetInstance().GetMapper();
-  auto sender_name = mapper->GetLPTypeName(sender_gid);
-
-  char const* anno_str;
-  if (anno->cid < 0)
-    anno_str = NULL;
-  else
-    anno_str = codes_mapping_get_anno_name_by_cid(anno->cid);
+  // auto sender_lpname = mapper->GetLPTypeName(sender_gid);
 
   int dest_offset;
   int is_group_modulo =
@@ -141,13 +138,11 @@ tw_lpid codes_mctx_to_lpid(
     // in this case, it needs to be the potential lps we could send to
     // not the number of lps in that type
     int num_dest_lps = mapper->GetDestinationLPCount(sender_gid, dest_lp_name);
-    // codes_mapping_get_lp_count(sender_group, 1, dest_lp_name, anno_str, anno->cid == -1);
     if (num_dest_lps == 0)
       tw_error(TW_LOC,
-        "ERROR: Found no LPs of type %s in group %s "
-        "(source lpid %lu) with annotation: %s\n",
-        dest_lp_name, sender_group, sender_gid,
-        anno->cid == -1 ? "ignored" : codes_mapping_get_anno_name_by_cid(anno->cid));
+        "ERROR: Found no LPs of type %s "
+        "(source lpid %lu)\n",
+        dest_lp_name, sender_gid);
 
     if (is_group_modulo)
     {
@@ -156,15 +151,16 @@ tw_lpid codes_mctx_to_lpid(
     }
     else
     {
-      int num_src_lps = codes_mapping_get_lp_count(sender_group, 1, sender_lpname, NULL, 1);
-      if (num_src_lps <= num_dest_lps)
-        dest_offset = offset;
-      else
-      {
-        dest_offset = offset * num_dest_lps / num_src_lps;
-        if (dest_offset >= num_dest_lps)
-          dest_offset = num_dest_lps - 1;
-      }
+      // TODO: handle this situation
+      // int num_src_lps = codes_mapping_get_lp_count(sender_group, 1, sender_lpname, NULL, 1);
+      // if (num_src_lps <= num_dest_lps)
+      //  dest_offset = offset;
+      // else
+      //{
+      //  dest_offset = offset * num_dest_lps / num_src_lps;
+      //  if (dest_offset >= num_dest_lps)
+      //    dest_offset = num_dest_lps - 1;
+      //}
     }
     if (is_group_reverse)
       dest_offset = num_dest_lps - 1 - dest_offset;
@@ -176,58 +172,47 @@ tw_lpid codes_mctx_to_lpid(
   else
     assert(0);
 
-  // tw_lpid rtn;
-  // codes_mapping_get_lp_id(
-  //   sender_group, dest_lp_name, anno_str, anno->cid == -1, rep_id, dest_offset, &rtn);
-  // return rtn;
   return mapper->GetDestinationLPId(sender_gid, dest_lp_name, dest_offset);
 }
 
 char const* codes_mctx_get_annotation(
   struct codes_mctx const* ctx, char const* dest_lp_name, tw_lpid sender_id)
 {
-  switch (ctx->type)
-  {
-    case CODES_MCTX_GLOBAL_DIRECT:
-      return codes_mapping_get_annotation_by_lpid(sender_id);
-    case CODES_MCTX_GROUP_RATIO:
-    case CODES_MCTX_GROUP_RATIO_REVERSE:
-      // if not ignoring the annotation, just return what's in the
-      // context
-      if (ctx->u.group_modulo.anno.cid >= 0)
-        return codes_mapping_get_anno_name_by_cid(ctx->u.group_modulo.anno.cid);
-      break;
-    case CODES_MCTX_GROUP_MODULO:
-    case CODES_MCTX_GROUP_MODULO_REVERSE:
-      // if not ignoring the annotation, just return what's in the
-      // context
-      if (ctx->u.group_modulo.anno.cid >= 0)
-        return codes_mapping_get_anno_name_by_cid(ctx->u.group_modulo.anno.cid);
-      break;
-    case CODES_MCTX_GROUP_DIRECT:
-      if (ctx->u.group_direct.anno.cid >= 0)
-        return codes_mapping_get_anno_name_by_cid(ctx->u.group_direct.anno.cid);
-      break;
-    default:
-      tw_error(TW_LOC, "unrecognized or uninitialized context type: %d", ctx->type);
-      return NULL;
-  }
-  // at this point, we must be a group-wise mapping ignoring annotations
-
-  char group[MAX_NAME_LENGTH];
-  int dummy;
-  // only need the group name
-  codes_mapping_get_lp_info(sender_id, group, &dummy, NULL, &dummy, NULL, &dummy, &dummy);
-
-  return codes_mapping_get_annotation_by_name(group, dest_lp_name);
+  /*
+switch (ctx->type)
+{
+  case CODES_MCTX_GLOBAL_DIRECT:
+    return codes_mapping_get_annotation_by_lpid(sender_id);
+  case CODES_MCTX_GROUP_RATIO:
+  case CODES_MCTX_GROUP_RATIO_REVERSE:
+    // if not ignoring the annotation, just return what's in the
+    // context
+    if (ctx->u.group_modulo.anno.cid >= 0)
+      return codes_mapping_get_anno_name_by_cid(ctx->u.group_modulo.anno.cid);
+    break;
+  case CODES_MCTX_GROUP_MODULO:
+  case CODES_MCTX_GROUP_MODULO_REVERSE:
+    // if not ignoring the annotation, just return what's in the
+    // context
+    if (ctx->u.group_modulo.anno.cid >= 0)
+      return codes_mapping_get_anno_name_by_cid(ctx->u.group_modulo.anno.cid);
+    break;
+  case CODES_MCTX_GROUP_DIRECT:
+    if (ctx->u.group_direct.anno.cid >= 0)
+      return codes_mapping_get_anno_name_by_cid(ctx->u.group_direct.anno.cid);
+    break;
+  default:
+    tw_error(TW_LOC, "unrecognized or uninitialized context type: %d", ctx->type);
+    return NULL;
 }
+// at this point, we must be a group-wise mapping ignoring annotations
 
-/*
- * Local variables:
- *  c-indent-level: 4
- *  c-basic-offset: 4
- *  indent-tabs-mode: nil
- * End:
- *
- * vim: ts=8 sts=4 sw=4 expandtab
- */
+char group[MAX_NAME_LENGTH];
+int dummy;
+// only need the group name
+codes_mapping_get_lp_info(sender_id, group, &dummy, NULL, &dummy, NULL, &dummy, &dummy);
+
+return codes_mapping_get_annotation_by_name(group, dest_lp_name);
+*/
+  return nullptr;
+}
