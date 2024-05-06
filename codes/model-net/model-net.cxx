@@ -9,8 +9,8 @@
 
 #include <ross.h>
 
-#include "codes/model-net/codes.h"
-#include "codes/model-net/lp-io.h"
+#include "codes/codes.h"
+#include "codes/lp-io.h"
 #include "codes/model-net/model-net-lp.h"
 #include "codes/model-net/model-net-method.h"
 #include "codes/model-net/model-net-sched.h"

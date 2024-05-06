@@ -4,9 +4,9 @@
  *
  */
 
+#include "codes/codes.h"
 #include <mpi.h>
 #include <ross.h>
-#include "codes/model-net/codes.h"
 
 MPI_Comm MPI_COMM_CODES = MPI_COMM_WORLD;
 
@@ -16,7 +16,7 @@ MPI_Comm MPI_COMM_CODES = MPI_COMM_WORLD;
  */
 void codes_comm_update()
 {
-    MPI_COMM_CODES = MPI_COMM_ROSS;
+  MPI_COMM_CODES = MPI_COMM_ROSS;
 }
 
 /*

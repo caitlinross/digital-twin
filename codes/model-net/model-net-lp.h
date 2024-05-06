@@ -15,17 +15,17 @@
 
 #include <ross.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
+#include "codes/lp-msg.h"
 #include "codes/model-net/congestion-controller-core.h"
-#include "codes/model-net/lp-msg.h"
 #include "codes/model-net/model-net-sched.h"
 #include "codes/model-net/model-net.h"
 #include "codes/models/pdes/routers/simplenet-upd.h"
 #include "codes/models/pdes/routers/simplep2p.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
   extern int model_net_base_magic;
 

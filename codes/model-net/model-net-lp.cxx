@@ -8,10 +8,10 @@
 #include <cstring>
 #include <stddef.h>
 
-#include "codes.h"
 #include "codes/GlobalDefines.h"
+#include "codes/codes.h"
+#include "codes/lp-type-lookup.h"
 #include "codes/mapping/Mapper.h"
-#include "codes/model-net/lp-type-lookup.h"
 #include "codes/model-net/model-net-lp.h"
 #include "codes/model-net/model-net-method.h"
 #include "codes/model-net/model-net-sched.h"

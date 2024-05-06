@@ -8,8 +8,8 @@
 #include <ross.h>
 #include <string.h>
 
+#include "codes/codes.h"
 #include "codes/mapping/Mapper.h"
-#include "codes/model-net/codes.h"
 #include "codes/model-net/model-net-lp.h"
 #include "codes/model-net/model-net-method.h"
 #include "codes/model-net/model-net.h"

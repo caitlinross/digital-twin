@@ -12,7 +12,7 @@
 #include <ross.h>
 
 #include <codes/GlobalDefines.h>
-#include <codes/model-net/lp-io.h>
+#include <codes/lp-io.h>
 #include <codes/models/pdes/hosts/SimpleServer.h>
 #include <codes/orchestrator/Orchestrator.h>
 #include <codes/util/CodesUtils.h>

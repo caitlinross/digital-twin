@@ -1,4 +1,9 @@
 set(srcs
+  codes-comm.c
+  lp-io.c
+  lp-msg.c
+  lp-type-lookup.c
+
 # mapping
   mapping/Mapper.cxx
   mapping/codes-jobmap.c
@@ -8,11 +13,6 @@ set(srcs
   mapping/jobmap-list.c
 
 # model-net
-  model-net/codes-comm.c
-  model-net/lp-io.c
-  model-net/lp-msg.c
-  model-net/lp-type-lookup.c
-  #model-net/ModelNet.cxx
   model-net/model-net-lp.cxx
   model-net/model-net-sched-impl.c
   model-net/model-net-sched.c
@@ -40,6 +40,10 @@ set(srcs
 
 set(headers
   GlobalDefines.h
+  codes.h
+  lp-io.h
+  lp-msg.h
+  lp-type-lookup.h
 
 # mapping
   mapping/Mapper.h
@@ -48,12 +52,7 @@ set(headers
   mapping/codes-mapping-context.h
 
 # model-net
-  model-net/codes.h
   model-net/congestion-controller-core.h
-  model-net/lp-io.h
-  model-net/lp-msg.h
-  model-net/lp-type-lookup.h
-  #model-net/ModelNet.h
   model-net/model-net-lp.h
   model-net/model-net-method.h
   model-net/model-net-sched-impl.h

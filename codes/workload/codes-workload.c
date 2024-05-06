@@ -8,7 +8,7 @@
 
 #include <ross.h>
 
-#include "codes/model-net/codes.h"
+#include "codes/codes.h"
 #include "codes/workload/codes-workload.h"
 
 /* list of available methods.  These are statically compiled for now, but we

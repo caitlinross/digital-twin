@@ -14,8 +14,8 @@
 
 #include <ross-extern.h>
 
+#include "codes/lp-type-lookup.h"
 #include "codes/mapping/Mapper.h"
-#include "codes/model-net/lp-type-lookup.h"
 #include "codes/orchestrator/ConfigParser.h"
 #include "codes/orchestrator/Orchestrator.h"
 

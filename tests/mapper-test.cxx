@@ -1,5 +1,5 @@
 
-#include "codes/model-net/lp-type-lookup.h"
+#include "codes/lp-type-lookup.h"
 #include <cstdlib>
 #include <iostream>
 

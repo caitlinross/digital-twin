@@ -8,7 +8,6 @@
 #include <ross.h>
 
 #include "codes/GlobalDefines.h"
-#include "codes/model-net/codes.h"
 #include "codes/util/quickhash.h"
 #include "codes/util/quicklist.h"
 #include "codes/workload/codes-workload.h"
