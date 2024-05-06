@@ -13,6 +13,7 @@ set(srcs
   mapping/jobmap-list.c
 
 # model-net
+  model-net/congestion-controller.cxx
   model-net/model-net-lp.cxx
   model-net/model-net-sched-impl.c
   model-net/model-net-sched.c
@@ -29,7 +30,6 @@ set(srcs
 
 # util
   util/lookup3.c
-  util/congestion-controller.C
 
 # workload
   workload/codes-workload.c
@@ -53,6 +53,7 @@ set(headers
 
 # model-net
   model-net/congestion-controller-core.h
+  model-net/congestion-controller-model.h
   model-net/model-net-lp.h
   model-net/model-net-method.h
   model-net/model-net-sched-impl.h
@@ -70,8 +71,6 @@ set(headers
 
 # util
   util/CodesUtils.h
-  util/congestion-controller-core.h
-  util/congestion-controller-model.h
   util/jenkins-hash.h
   util/quickhash.h
   util/quicklist.h

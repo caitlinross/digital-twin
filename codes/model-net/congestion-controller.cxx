@@ -1,9 +1,9 @@
 #include "codes/lp-io.h"
 #include "codes/orchestrator/Orchestrator.h"
 #include <codes/mapping/codes-jobmap.h>
+#include <codes/model-net/congestion-controller-core.h>
+#include <codes/model-net/congestion-controller-model.h>
 #include <codes/model-net/model-net-lp.h>
-#include <codes/util/congestion-controller-core.h>
-#include <codes/util/congestion-controller-model.h>
 
 #include <map>
 #include <set>

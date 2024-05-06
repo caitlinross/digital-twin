@@ -13,8 +13,9 @@
 #include <set>
 #include <vector>
 
-#include <codes/util/congestion-controller-core.h>
 #include <ross.h>
+
+#include <codes/model-net/congestion-controller-core.h>
 
 using namespace std;
 
