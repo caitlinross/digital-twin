@@ -1,6 +1,6 @@
+#include "codes/model-net/lp-io.h"
 #include "codes/orchestrator/Orchestrator.h"
 #include <codes/mapping/codes-jobmap.h>
-#include <codes/mapping/codes-mapping.h>
 #include <codes/model-net/model-net-lp.h>
 #include <codes/util/congestion-controller-core.h>
 #include <codes/util/congestion-controller-model.h>
@@ -602,6 +602,7 @@ void cc_router_local_controller_init(rlc_state* s, tw_lp* lp, int total_terminal
   s->router_vc_sizes_on_each_port = vc_sizes;
   s->router_bandwidths_on_each_port = bandwidths;
 
+  /* FIXME:
   int rc = configuration_get_value_double(&config, "PARAMS", "cc_single_port_congestion_threshold",
     NULL, &p->single_port_congestion_threshold);
   if (rc)
@@ -629,6 +630,7 @@ void cc_router_local_controller_init(rlc_state* s, tw_lp* lp, int total_terminal
   {
     p->minimum_abatement_time = 10000000;
   }
+  */
 
   p->notification_latency = g_congestion_control_notif_latency;
 
@@ -1055,6 +1057,7 @@ void cc_terminal_local_controller_init(
   //     }
   // }
 
+  /* FIXME:
   int rc = configuration_get_value_double(
     &config, "PARAMS", "cn_bandwidth", NULL, &p->terminal_configured_bandwidth);
   if (rc)
@@ -1076,6 +1079,7 @@ void cc_terminal_local_controller_init(
   {
     cc_bandwidth_monitoring_window = 10000;
   }
+  */
 
   p->notification_latency = g_congestion_control_notif_latency;
 

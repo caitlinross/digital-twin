@@ -75,7 +75,6 @@ struct sp_state
  * last index) */
 static uint64_t num_params = 0;
 static simplep2p_param* all_params = NULL;
-static const config_anno_map_t* anno_map = NULL;
 
 static int sp_magic = 0;
 

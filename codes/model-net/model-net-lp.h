@@ -108,7 +108,6 @@ extern "C"
   void model_net_base_register(int* do_config_nets);
   // configure the base LP type, setting up general parameters
   void model_net_base_configure();
-  void model_net_base_configure_yaml();
 
   /// The remaining functions/data structures are only of interest to model-net
   /// model developers

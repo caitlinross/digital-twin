@@ -10,6 +10,7 @@
 
 #include "codes/models/pdes/hosts/SimpleServer.h"
 #include "codes/mapping/Mapper.h"
+#include "codes/model-net/lp-type-lookup.h"
 #include "codes/orchestrator/Orchestrator.h"
 #include "codes/util/CodesUtils.h"
 

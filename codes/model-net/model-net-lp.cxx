@@ -8,9 +8,10 @@
 #include <cstring>
 #include <stddef.h>
 
+#include "codes.h"
 #include "codes/GlobalDefines.h"
 #include "codes/mapping/Mapper.h"
-#include "codes/mapping/codes-mapping.h"
+#include "codes/model-net/lp-type-lookup.h"
 #include "codes/model-net/model-net-lp.h"
 #include "codes/model-net/model-net-method.h"
 #include "codes/model-net/model-net-sched.h"
@@ -212,139 +213,6 @@ void model_net_base_register(int* do_config_nets)
 
 static void base_read_config(const char* anno, model_net_base_params* p)
 {
-  char sched[MAX_NAME_LENGTH];
-  long int packet_size_l = 0;
-  uint64_t packet_size;
-  int ret;
-
-  ret =
-    configuration_get_value(&config, "PARAMS", "modelnet_scheduler", anno, sched, MAX_NAME_LENGTH);
-  configuration_get_value_longint(&config, "PARAMS", "packet_size", anno, &packet_size_l);
-  packet_size = packet_size_l;
-
-  if (ret > 0)
-  {
-    int i;
-    for (i = 0; i < MAX_SCHEDS; i++)
-    {
-      if (strcmp(sched_names[i], sched) == 0)
-      {
-        p->sched_params.type = static_cast<sched_type>(i);
-        break;
-      }
-    }
-    if (i == MAX_SCHEDS)
-    {
-      tw_error(TW_LOC,
-        "Unknown value for PARAMS:modelnet-scheduler : "
-        "%s",
-        sched);
-    }
-  }
-  else
-  {
-    // default: FCFS
-    p->sched_params.type = MN_SCHED_FCFS;
-  }
-
-  p->num_queues = 1;
-  ret =
-    configuration_get_value_int(&config, "PARAMS", "num_injection_queues", anno, &p->num_queues);
-  if (ret && !g_tw_mynode)
-  {
-    fprintf(stdout,
-      "NIC num injection port not specified, "
-      "setting to %d\n",
-      p->num_queues);
-  }
-
-  p->nic_seq_delay = 10;
-  ret = configuration_get_value_double(&config, "PARAMS", "nic_seq_delay", anno, &p->nic_seq_delay);
-  if (ret && !g_tw_mynode)
-  {
-    fprintf(stdout,
-      "NIC seq delay not specified, "
-      "setting to %lf\n",
-      p->nic_seq_delay);
-  }
-
-  p->node_copy_queues = 1;
-  ret =
-    configuration_get_value_int(&config, "PARAMS", "node_copy_queues", anno, &p->node_copy_queues);
-  if (ret && !g_tw_mynode)
-  {
-    fprintf(stdout,
-      "NIC num copy queues not specified, "
-      "setting to %d\n",
-      p->node_copy_queues);
-  }
-
-  // get scheduler-specific parameters
-  if (p->sched_params.type == MN_SCHED_PRIO)
-  {
-    // prio scheduler uses default parameters
-    int* num_prios = &p->sched_params.u.prio.num_prios;
-    enum sched_type* sub_stype = &p->sched_params.u.prio.sub_stype;
-    // number of priorities to allocate
-    ret = configuration_get_value_int(&config, "PARAMS", "prio-sched-num-prios", anno, num_prios);
-    if (ret != 0)
-      *num_prios = 10;
-
-    ret = configuration_get_value(
-      &config, "PARAMS", "prio-sched-sub-sched", anno, sched, MAX_NAME_LENGTH);
-    if (ret <= 0)
-      *sub_stype = MN_SCHED_FCFS;
-    else
-    {
-      int i;
-      for (i = 0; i < MAX_SCHEDS; i++)
-      {
-        if (strcmp(sched_names[i], sched) == 0)
-        {
-          *sub_stype = static_cast<sched_type>(i);
-          break;
-        }
-      }
-      if (i == MAX_SCHEDS)
-      {
-        tw_error(TW_LOC,
-          "Unknown value for "
-          "PARAMS:prio-sched-sub-sched %s",
-          sched);
-      }
-      else if (i == MN_SCHED_PRIO)
-      {
-        tw_error(TW_LOC, "priority scheduler cannot be used as a "
-                         "priority scheduler's sub sched "
-                         "(PARAMS:prio-sched-sub-sched)");
-      }
-    }
-  }
-
-  if (p->sched_params.type == MN_SCHED_FCFS_FULL ||
-      (p->sched_params.type == MN_SCHED_PRIO &&
-        p->sched_params.u.prio.sub_stype == MN_SCHED_FCFS_FULL))
-  {
-    // override packet size to something huge (leave a bit in the unlikely
-    // case that an op using packet size causes overflow)
-    packet_size = 1ull << 62;
-  }
-  else if (!packet_size && (p->sched_params.type != MN_SCHED_FCFS_FULL ||
-                             (p->sched_params.type == MN_SCHED_PRIO &&
-                               p->sched_params.u.prio.sub_stype != MN_SCHED_FCFS_FULL)))
-  {
-    packet_size = 512;
-    fprintf(stderr,
-      "WARNING, no packet size specified, setting packet "
-      "size to %llu\n",
-      LLU(packet_size));
-  }
-
-  p->packet_size = packet_size;
-}
-
-static void base_read_config_yaml(const char* anno, model_net_base_params* p)
-{
   long int packet_size_l = 0;
   uint64_t packet_size;
 
@@ -489,73 +357,6 @@ void model_net_base_configure()
   // the base parameters
   // - the init is a little easier as we can use the LP-id to look up the
   // annotation
-
-  // first grab all of the annotations and store locally
-  for (int c = 0; c < lpconf.lpannos_count; c++)
-  {
-    const config_anno_map_t* amap = &lpconf.lpannos[c];
-    if (strncmp("modelnet_", amap->lp_name.ptr, 9) == 0)
-    {
-      for (int n = 0; n < amap->num_annos; n++)
-      {
-        int a;
-        for (a = 0; a < num_params; a++)
-        {
-          if (annos[a] != NULL && amap->annotations[n].ptr != NULL &&
-              strcmp(amap->annotations[n].ptr, annos[a]) == 0)
-          {
-            break;
-          }
-        }
-        if (a == num_params)
-        {
-          // found a new annotation
-          annos[num_params++] = amap->annotations[n].ptr;
-        }
-      }
-      if (amap->has_unanno_lp)
-      {
-        int a;
-        for (a = 0; a < num_params; a++)
-        {
-          if (annos[a] == NULL)
-            break;
-        }
-        if (a == num_params)
-        {
-          // found a new (empty) annotation
-          annos[num_params++] = NULL;
-        }
-      }
-    }
-  }
-
-  // now that we have all of the annos for all of the networks, loop through
-  // and read the configs
-  for (int i = 0; i < num_params; i++)
-  {
-    base_read_config(annos[i], &all_params[i]);
-  }
-}
-
-void model_net_base_configure_yaml()
-{
-  uint32_t h1 = 0, h2 = 0;
-
-  bj_hashlittle2(MN_NAME, strlen(MN_NAME), &h1, &h2);
-  model_net_base_magic = h1 + h2;
-
-  // set up offsets - doesn't matter if they are actually used or not
-  msg_offsets[SIMPLENET] = offsetof(model_net_wrap_msg, msg.m_snet);
-  msg_offsets[SIMPLEP2P] = offsetof(model_net_wrap_msg, msg.m_sp2p);
-  msg_offsets[CONGESTION_CONTROLLER] = offsetof(model_net_wrap_msg, msg.m_cc);
-
-  // perform the configuration(s)
-  // This part is tricky, as we basically have to look up all annotations that
-  // have LP names of the form modelnet_*. For each of those, we need to read
-  // the base parameters
-  // - the init is a little easier as we can use the LP-id to look up the
-  // annotation
   auto& orchestrator = codes::Orchestrator::GetInstance();
   auto parser = orchestrator.GetConfigParser();
   auto& simConfig = parser->GetSimulationConfig();
@@ -592,7 +393,7 @@ void model_net_base_configure_yaml()
   // and read the configs
   for (int i = 0; i < num_params; i++)
   {
-    base_read_config_yaml(annos[i], &all_params[i]);
+    base_read_config(annos[i], &all_params[i]);
   }
 }
 

@@ -1,21 +1,4 @@
-find_package(FLEX REQUIRED)
-find_package(BISON REQUIRED)
-
-flex_target(codes_lexer ${CMAKE_CURRENT_SOURCE_DIR}/config/config-lex.l ${CMAKE_CURRENT_SOURCE_DIR}/config/config-lex.c DEFINES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/config/config-lex.h)
-bison_target(codes_parser ${CMAKE_CURRENT_SOURCE_DIR}/config/config-parser.y ${CMAKE_CURRENT_SOURCE_DIR}/config/config-parser.c DEFINES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/config/config-parser.h)
-ADD_FLEX_BISON_DEPENDENCY(codes_lexer codes_parser)
-
 set(srcs
-# config
-  config/config-file.c
-  config/config-glue.c
-  config/config-lex.c
-  config/config-parser.c
-  config/config-store.c
-  config/config-store-adapter.c
-  config/configuration.c
-  config/txt-config-file.c
-
 # mapping
   mapping/Mapper.cxx
   mapping/codes-jobmap.c
@@ -57,15 +40,6 @@ set(srcs
 
 set(headers
   GlobalDefines.h
-# config
-  config/config-file.h
-  config/config-glue.h
-  config/config-lex.h
-  config/config-parser.h
-  config/config-store.h
-  config/config-store-adapter.h
-  config/configuration.h
-  config/txt-config-file.h
 
 # mapping
   mapping/Mapper.h
@@ -108,12 +82,12 @@ set(headers
 )
 
 set(codes_deps)
-if (CODES_HAVE_DUMPI)
+if(CODES_HAVE_DUMPI)
   list(APPEND srcs workload/methods/codes-dumpi-trace-nw-wrkld.c)
   list(APPEND codes_deps DUMPI::DUMPI)
 endif()
 
-if (CODES_HAVE_TORCH)
+if(CODES_HAVE_TORCH)
   list(APPEND codes_deps ${TORCH_LIBRARIES})
 endif()
 
@@ -135,12 +109,12 @@ target_include_directories(codes
   $<INSTALL_INTERFACE:include>
 )
 
-CONFIGURE_FILE(config/codes-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config/codes-config.h)
+configure_file(codes-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/codes-config.h)
 
 #-------------------------------------------------------------------------------
 # installation
 
-include (GNUInstallDirs)
+include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/codes)
 
 install(TARGETS codes

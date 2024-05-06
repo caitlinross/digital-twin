@@ -17,10 +17,7 @@ extern "C"
 #include <stdint.h>
 
 #include "codes/GlobalDefines.h"
-#include "codes/config/configuration.h"
 #include "codes/mapping/codes-mapping-context.h"
-#include "codes/model-net/lp-io.h"
-#include "codes/model-net/lp-type-lookup.h"
 
 #ifdef ENABLE_CORTEX
 #include <cortex/cortex.h>
@@ -160,8 +157,6 @@ extern "C"
   /* Registers all model-net LPs in ROSS. Should be called after
    * configuration_load, but before codes_mapping_setup */
   void model_net_register();
-  // replaces above for new config
-  void model_net_register_yaml();
 
   /* Configures all model-net LPs based on the CODES configuration, and returns
    * ids to address the different types by.
@@ -171,7 +166,6 @@ extern "C"
    * return - the set of network IDs, indexed in the order given by the
    * modelnet_order configuration parameter */
   int* model_net_configure(int* id_count);
-  int* model_net_configure_yaml(int* id_count);
 
   /* Sets up a sampling loop for model net events. The sampling data provided by
    * each modelnet lp is model-defined. This is a PE-wide setting. Data is sent

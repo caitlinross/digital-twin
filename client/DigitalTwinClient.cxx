@@ -12,7 +12,6 @@
 #include <ross.h>
 
 #include <codes/GlobalDefines.h>
-#include <codes/config/configuration.h>
 #include <codes/model-net/lp-io.h>
 #include <codes/models/pdes/hosts/SimpleServer.h>
 #include <codes/orchestrator/Orchestrator.h>
@@ -53,18 +52,14 @@ int main(int argc, char* argv[])
 
   // registers all model-net lps in ross. should be called after configuring, but
   // before the mapping setup
-  // for this I need to add the lps to the NETWORK_DEF in model-net.h
-  // also this relies on a global variable lpconf from configuration.h
-  // so it's heavliy dependent on that.
-  // will need to rewrite this to work on my config
-  model_net_register_yaml();
+  model_net_register();
 
   auto mapper = orchestrator.GetMapper();
   mapper->MappingSetup();
 
   int num_nets;
   int* net_ids;
-  net_ids = model_net_configure_yaml(&num_nets);
+  net_ids = model_net_configure(&num_nets);
   // net_ids = orchestrator.ModelNetConfigure(num_nets);
   assert(num_nets == 1);
   int net_id = net_ids[0];
