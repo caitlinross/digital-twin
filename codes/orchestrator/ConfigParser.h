@@ -11,6 +11,8 @@
 #ifndef CODES_YAML_PARSER_H
 #define CODES_YAML_PARSER_H
 
+#include "codes/SupportedLPTypes.h"
+
 #include <graphviz/cgraph.h>
 
 #include <c4/yml/node.hpp>
@@ -35,6 +37,7 @@ struct LPTypeConfig
   ComponentType Type;
   std::string ConfigName; // name used in graphviz
   std::string ModelName;  // the codes LP name
+  CodesLPTypes ModelType;
   std::vector<std::string> NodeNames;
 };
 

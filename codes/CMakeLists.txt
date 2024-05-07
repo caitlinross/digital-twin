@@ -3,6 +3,7 @@ set(srcs
   lp-io.c
   lp-msg.c
   lp-type-lookup.c
+  SupportedLPTypes.cxx
 
 # mapping
   mapping/Mapper.cxx
@@ -44,6 +45,7 @@ set(headers
   lp-io.h
   lp-msg.h
   lp-type-lookup.h
+  SupportedLPTypes.h
 
 # mapping
   mapping/Mapper.h

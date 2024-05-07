@@ -9,6 +9,7 @@
 //============================================================================
 
 #include "codes/orchestrator/Orchestrator.h"
+#include "codes/lp-type-lookup.h"
 #include "codes/mapping/Mapper.h"
 #include "codes/orchestrator/ConfigParser.h"
 
@@ -24,6 +25,7 @@ bool Orchestrator::Destroyed = false;
 Orchestrator::Orchestrator()
   : Comm(MPI_COMM_WORLD)
   , Parser(std::make_shared<ConfigParser>())
+  , RegistrationCallbacks(static_cast<int>(CodesLPTypes::NumberOfTypes))
 {
 }
 
@@ -65,21 +67,32 @@ void Orchestrator::ParseConfig(const std::string& configFileName)
   }
 
   this->Parser->ParseConfig(configFileName);
+
+  // right now we're registering all non-model-net lps here
+  // TODO: eventually make all LPs registered this way?
+  for (const auto& config : this->Parser->GetLPTypeConfigs())
+  {
+    auto callback = this->RegistrationCallbacks[static_cast<int>(config.ModelType)];
+    if (callback)
+    {
+      callback();
+    }
+  }
+
   this->_Mapper = std::make_shared<Mapper>(this->Parser);
 }
 
-void Orchestrator::LPTypeRegister(const std::string& name, const tw_lptype* type)
+// TODO: move the functionality for lp_type_register/lookup to here?
+bool Orchestrator::RegisterLPType(CodesLPTypes type, RegisterLPTypeCallback registrationFn)
 {
-  // LPNameMapping nameMap;
-  // nameMap.Name = name;
-  // nameMap.LPType = type;
-  // this->LPNameMap.push_back(nameMap);
-  this->LPNameMap[name] = type;
+  // TODO: add in some error checks
+  this->RegistrationCallbacks[static_cast<int>(type)] = registrationFn;
+  return true;
 }
 
 const tw_lptype* Orchestrator::LPTypeLookup(const std::string& name)
 {
-  return this->LPNameMap.count(name) ? this->LPNameMap[name] : nullptr;
+  return lp_type_lookup(name.c_str());
 }
 
 } // end namespace codes

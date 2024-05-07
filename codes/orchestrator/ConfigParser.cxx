@@ -9,6 +9,7 @@
 //============================================================================
 
 #include "codes/orchestrator/ConfigParser.h"
+#include "codes/SupportedLPTypes.h"
 
 #include <ross.h>
 
@@ -163,6 +164,7 @@ void ConfigParser::RecurseConfig(ryml::ConstNodeRef root, int lpTypeIndex)
     else if (root.key() == "model")
     {
       lpConfig.ModelName = std::string(root.val().str, root.val().len);
+      lpConfig.ModelType = ConvertLPTypeNameToEnum(lpConfig.ModelName);
     }
     return;
   }

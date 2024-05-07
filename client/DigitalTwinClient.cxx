@@ -34,21 +34,17 @@ int main(int argc, char* argv[])
   tw_opt_add(AppOptions);
   tw_init(&argc, &argv);
 
+  // TODO: make a config option
   g_tw_ts_end = codes::SecondsToNS(60 * 60 * 24 * 365); /* one year, in nsecs */
 
   int rank, nprocs;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-  std::string yamlFile = config_file;
   // setup the orchestrator and pass the config file
   auto& orchestrator = codes::Orchestrator::GetInstance();
 
   orchestrator.ParseConfig(config_file);
-
-  // TODO: need to figure out how to add the correct LP types
-  // though this will be done in the orchestrator
-  SimpleServerAddLPType();
 
   // registers all model-net lps in ross. should be called after configuring, but
   // before the mapping setup

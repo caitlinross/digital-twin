@@ -11,13 +11,13 @@
 #ifndef CODES_ORCHESTRATOR_ORCHESTRATOR_H
 #define CODES_ORCHESTRATOR_ORCHESTRATOR_H
 
+#include "codes/SupportedLPTypes.h"
 #include "codes/mapping/Mapper.h"
 #include "codes/orchestrator/ConfigParser.h"
 
 #include <mpi.h>
 #include <ross.h>
 
-#include <map>
 #include <string>
 
 namespace codes
@@ -38,7 +38,10 @@ public:
   // TODO: add ability to set MPI_COMM_CODES. just have default be MPI_COMM_WORLD
   void ParseConfig(const std::string& configFileName);
 
-  void LPTypeRegister(const std::string& name, const tw_lptype* type);
+  typedef void (*RegisterLPTypeCallback)();
+  bool RegisterLPType(CodesLPTypes type, RegisterLPTypeCallback registrationFn);
+
+  const tw_lptype* LPTypeLookup(const std::string& name);
 
   std::shared_ptr<ConfigParser> GetConfigParser();
 
@@ -57,12 +60,11 @@ private:
 
   MPI_Comm Comm;
 
-  std::map<std::string, const tw_lptype*> LPNameMap;
-
-  const tw_lptype* LPTypeLookup(const std::string& name);
-
   std::shared_ptr<ConfigParser> Parser;
   std::shared_ptr<Mapper> _Mapper;
+
+  // enabling automatic registration of LP types
+  std::vector<RegisterLPTypeCallback> RegistrationCallbacks;
 };
 
 } // end namespace codes

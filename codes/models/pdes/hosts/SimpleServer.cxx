@@ -50,13 +50,13 @@ tw_lptype SimpleServerLP = {
   sizeof(SimpleServerState),
 };
 
-// TODO have the Orchestrator be able to call this and you pass to it the lp name and
-// the tw_lptype struct
-void SimpleServerAddLPType()
+void SimpleServerRegisterLPType()
 {
   lp_type_register("SimpleServer", &SimpleServerLP);
-  codes::Orchestrator::GetInstance().LPTypeRegister("SimpleServer", &SimpleServerLP);
 }
+
+const bool registered = codes::Orchestrator::GetInstance().RegisterLPType(
+  codes::CodesLPTypes::SimpleServer, SimpleServerRegisterLPType);
 
 void simple_server_init(SimpleServerState* ns, tw_lp* lp)
 {
