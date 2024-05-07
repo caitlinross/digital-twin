@@ -56,7 +56,7 @@ void SimpleServerRegisterLPType()
 }
 
 const bool registered = codes::Orchestrator::GetInstance().RegisterLPType(
-  codes::CodesLPTypes::SimpleServer, SimpleServerRegisterLPType);
+  codes::CodesLPTypes::SimpleServer, SimpleServerRegisterLPType, SimpleServerSetNetId);
 
 void simple_server_init(SimpleServerState* ns, tw_lp* lp)
 {

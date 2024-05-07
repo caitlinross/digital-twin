@@ -39,13 +39,21 @@ public:
   void ParseConfig(const std::string& configFileName);
 
   typedef void (*RegisterLPTypeCallback)();
-  bool RegisterLPType(CodesLPTypes type, RegisterLPTypeCallback registrationFn);
+  typedef void (*RegisterNetworkIdCallback)(int netId);
+  bool RegisterLPType(
+    CodesLPTypes type, RegisterLPTypeCallback registrationFn, RegisterNetworkIdCallback netIdFn);
 
   const tw_lptype* LPTypeLookup(const std::string& name);
 
   std::shared_ptr<ConfigParser> GetConfigParser();
 
   std::shared_ptr<Mapper> GetMapper() { return this->_Mapper; }
+
+  int GetNumberOfNetworks() { return this->NumberOfNetworks; }
+
+  int* GetNetworkIds() { return this->NetworkIds; }
+
+  void ReportModelNetStats();
 
 private:
   Orchestrator();
@@ -64,7 +72,13 @@ private:
   std::shared_ptr<Mapper> _Mapper;
 
   // enabling automatic registration of LP types
-  std::vector<RegisterLPTypeCallback> RegistrationCallbacks;
+  std::vector<RegisterLPTypeCallback> LPTypeCallbacks;
+  std::vector<RegisterNetworkIdCallback> NetworkIdCallbacks;
+
+  // need to store network ids from model_net_configure
+  // TODO: change to use a vector instead
+  int* NetworkIds;
+  int NumberOfNetworks;
 };
 
 } // end namespace codes

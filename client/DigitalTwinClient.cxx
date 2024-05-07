@@ -46,24 +46,6 @@ int main(int argc, char* argv[])
 
   orchestrator.ParseConfig(config_file);
 
-  // registers all model-net lps in ross. should be called after configuring, but
-  // before the mapping setup
-  model_net_register();
-
-  auto mapper = orchestrator.GetMapper();
-  mapper->MappingSetup();
-
-  int num_nets;
-  int* net_ids;
-  net_ids = model_net_configure(&num_nets);
-  // net_ids = orchestrator.ModelNetConfigure(num_nets);
-  assert(num_nets == 1);
-  int net_id = net_ids[0];
-  SimpleServerSetNetId(net_id);
-
-  int num_servers = mapper->GetLPTypeCount("SimpleServer");
-  assert(num_servers == 3);
-
   lp_io_handle handle;
   char name[15] = "modelnet-test\0";
   if (lp_io_prepare(name, LP_IO_UNIQ_SUFFIX, &handle, MPI_COMM_WORLD) < 0)
@@ -72,7 +54,8 @@ int main(int argc, char* argv[])
   }
 
   tw_run();
-  model_net_report_stats(net_id);
+
+  orchestrator.ReportModelNetStats();
 
   if (lp_io_flush(handle, MPI_COMM_WORLD) < 0)
   {
