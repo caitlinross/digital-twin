@@ -9,11 +9,13 @@
 //============================================================================
 
 #include "codes/orchestrator/Orchestrator.h"
+#include "codes/SupportedLPTypes.h"
 #include "codes/lp-type-lookup.h"
 #include "codes/mapping/Mapper.h"
 #include "codes/model-net/model-net.h"
 #include "codes/orchestrator/ConfigParser.h"
 
+#include <iostream>
 #include <memory>
 #include <ross.h>
 
@@ -69,19 +71,35 @@ void Orchestrator::ParseConfig(const std::string& configFileName)
   }
 
   this->Parser->ParseConfig(configFileName);
+  this->_Mapper = std::make_shared<Mapper>(this->Parser);
+}
+
+void Orchestrator::ConfigureSimulation(const std::string& configFileName)
+{
+  this->ParseConfig(configFileName);
 
   // right now we're registering all non-model-net lps here
   // TODO: eventually make all LPs registered this way?
   for (const auto& config : this->Parser->GetLPTypeConfigs())
   {
-    auto callback = this->LPTypeCallbacks[static_cast<int>(config.ModelType)];
+    RegisterLPTypeCallback callback = nullptr;
+    if (config.ModelType == CodesLPTypes::Custom)
+    {
+      auto it = this->CustomLPTypeInfo.find(config.ModelName);
+      if (it != this->CustomLPTypeInfo.end())
+      {
+        callback = it->second.RegistrationFn;
+      }
+    }
+    else
+    {
+      callback = this->LPTypeCallbacks[static_cast<int>(config.ModelType)];
+    }
     if (callback)
     {
       callback();
     }
   }
-
-  this->_Mapper = std::make_shared<Mapper>(this->Parser);
 
   model_net_register();
   this->_Mapper->MappingSetup();
@@ -95,7 +113,19 @@ void Orchestrator::ParseConfig(const std::string& configFileName)
   // so how to figure that out?
   for (const auto& config : this->Parser->GetLPTypeConfigs())
   {
-    auto callback = this->NetworkIdCallbacks[static_cast<int>(config.ModelType)];
+    RegisterNetworkIdCallback callback = nullptr;
+    if (config.ModelType == CodesLPTypes::Custom)
+    {
+      auto it = this->CustomLPTypeInfo.find(config.ModelName);
+      if (it != this->CustomLPTypeInfo.end())
+      {
+        callback = it->second.NetworkIdFn;
+      }
+    }
+    else
+    {
+      callback = this->NetworkIdCallbacks[static_cast<int>(config.ModelType)];
+    }
     if (callback)
     {
       assert(this->NumberOfNetworks == 1);
@@ -109,8 +139,39 @@ bool Orchestrator::RegisterLPType(
   CodesLPTypes type, RegisterLPTypeCallback registrationFn, RegisterNetworkIdCallback netIdFn)
 {
   // TODO: add in some error checks
-  this->LPTypeCallbacks[static_cast<int>(type)] = registrationFn;
-  this->NetworkIdCallbacks[static_cast<int>(type)] = netIdFn;
+  if (type < CodesLPTypes::NumberOfTypes)
+  {
+    this->LPTypeCallbacks[static_cast<int>(type)] = registrationFn;
+    this->NetworkIdCallbacks[static_cast<int>(type)] = netIdFn;
+  }
+  return true;
+}
+
+bool Orchestrator::RegisterLPType(const std::string& typeName,
+  RegisterLPTypeCallback registrationFn, RegisterNetworkIdCallback netIdFn)
+{
+  // TODO: add in some error checks
+  auto type = ConvertLPTypeNameToEnum(typeName);
+  if (type < CodesLPTypes::NumberOfTypes)
+  {
+    this->LPTypeCallbacks[static_cast<int>(type)] = registrationFn;
+    this->NetworkIdCallbacks[static_cast<int>(type)] = netIdFn;
+  }
+  else if (type == CodesLPTypes::Custom)
+  {
+    if (this->CustomLPTypeInfo.count(typeName))
+    {
+      std::cout << "WARNING: the callbacks for LP type " << typeName
+                << " have already been registered. Check to make sure you didn't give the same "
+                   "name to different LP types."
+                << std::endl;
+      return false;
+    }
+
+    this->CustomLPTypeInfo[typeName] = LPTypeInfo();
+    this->CustomLPTypeInfo[typeName].RegistrationFn = registrationFn;
+    this->CustomLPTypeInfo[typeName].NetworkIdFn = netIdFn;
+  }
   return true;
 }
 

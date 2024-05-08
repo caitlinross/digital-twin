@@ -20,8 +20,9 @@ enum class CodesLPTypes
   SimpleServer,
   SimpleP2P,
   SimpleNet,
-  // the following should always remain the final 2 entries in this enum
+  // the following should always remain the final 3 entries in this enum
   NumberOfTypes,
+  Custom,
   Unknown
 };
 

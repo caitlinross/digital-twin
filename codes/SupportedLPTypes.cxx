@@ -22,8 +22,8 @@ CodesLPTypes ConvertLPTypeNameToEnum(std::string str)
     return CodesLPTypes::SimpleP2P;
   if (str == "simplenet")
     return CodesLPTypes::SimpleNet;
-  // TODO: or just call tw_error?
-  return CodesLPTypes::Unknown;
+  // we'll assume it's a custom lp type at this point
+  return CodesLPTypes::Custom;
 }
 
 } // end namespace codes

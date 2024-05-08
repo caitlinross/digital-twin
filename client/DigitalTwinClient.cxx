@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
   // setup the orchestrator and pass the config file
   auto& orchestrator = codes::Orchestrator::GetInstance();
 
-  orchestrator.ParseConfig(config_file);
+  orchestrator.ConfigureSimulation(config_file);
 
   lp_io_handle handle;
   char name[15] = "modelnet-test\0";

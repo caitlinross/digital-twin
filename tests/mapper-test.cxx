@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 
   auto& orchestrator = codes::Orchestrator::GetInstance();
 
-  orchestrator.ParseConfig(conf_file_name);
+  orchestrator.ConfigureSimulation(conf_file_name);
 
   lp_type_register("a", &a_lp);
   lp_type_register("b", &b_lp);
