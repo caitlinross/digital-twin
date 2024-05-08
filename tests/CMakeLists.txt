@@ -15,6 +15,11 @@ add_test(NAME simplenet-test
       --config-file=${CMAKE_CURRENT_SOURCE_DIR}/conf/simplenet-test.yaml
 )
 
+add_test(NAME esnet-prototype
+      COMMAND codes-digital-twin --sync=1
+      --config-file=${CMAKE_CURRENT_SOURCE_DIR}/conf/esnet-testbed-prototype.yaml
+)
+
 # TODO add comparison for output
 add_executable(mapping-test mapper-test.cxx)
 target_link_libraries(mapping-test PUBLIC CODES::CODES)

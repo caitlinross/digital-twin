@@ -1,0 +1,21 @@
+router_config0:
+  type: router
+  model: modelnet_simplep2p
+  node_ids: [router0 , router1]
+
+host_config0:
+  type: host
+  model: SimpleServer 
+  node_ids: [host0, host1, host2, host3]
+
+simulation:
+  packet_size: 512 
+  modelnet_scheduler: fcfs
+  modelnet_order: ["simplep2p"]
+  ross_message_size: 400 
+  # just using modelnet test latency files for now
+  net_latency_ns_file: "esnet-testbed-latency.conf"
+  net_bw_mbps_file: "esnet-testbed-bw.conf"
+
+topology:
+  filename: "esnet-testbed-prototype.dot"

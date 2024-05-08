@@ -1,0 +1,14 @@
+graph network {
+
+    subgraph cluster_0 {
+        host0 -- router0;
+        host1 -- router0;
+    }
+
+    subgraph cluster_1 {
+        host2 -- router1;
+        host3 -- router1;
+    }
+
+    router0 -- router1;
+}
