@@ -190,12 +190,6 @@ void Mapper::ProcessEdges(Agraph_t* graph, Agnode_t* vertex, int& nodesIdx)
       connNode->ConfigIdx = findConfigIndex(lpConfigs, connNode->NodeName);
       nodesIdx++;
     }
-    else
-    {
-      // TODO: doesn't happen in my current example, but probably could
-      // happen in other graphs
-      std::cout << "node already exists. need to update connections" << std::endl;
-    }
   }
 }
 
