@@ -1,0 +1,26 @@
+# this example mimics the simplenet test in codes
+# this is going to be annoying with large networks...
+# we can have this approach for absolute flexibility, but
+# need to some up with some way to make it so you don't have to write out a list of every
+# node id. maybe we could use regex? so you could say that your node_ids for router_config0
+# are the nodes that always start with "router"
+router_config0:
+  type: router
+  model: modelnet_simplenet
+  node_ids: [nic0, nic1, nic2, nic3, nic4, nic5, nic6, nic7, nic8, nic9, nic10, nic11, nic12, nic13, nic14, nic15]
+
+host_config0:
+  type: host
+  model: SimpleServer 
+  node_ids: [host0, host1, host2, host3, host4, host5, host6, host7, host8, host9, host10, host11, host12, host13, host14, host15]
+
+simulation:
+  packet_size: 512 
+  modelnet_scheduler: fcfs
+  modelnet_order: ["simplenet"]
+  ross_message_size: 400 
+  net_startup_ns: 1.5
+  net_bw_mbps: 20000
+
+topology:
+  filename: "simplenet-test-topology.dot"

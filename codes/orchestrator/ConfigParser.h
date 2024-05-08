@@ -46,6 +46,7 @@ struct SimulationConfig
   int PacketSize;
   int ROSSMessageSize;
   std::string ModelNetScheduler;
+  std::vector<std::string> ModelNetOrder;
 
   // TODO: maybe should store these differently, so that when
   // a model asks for a value, it can determine that it was actually set and we're not just

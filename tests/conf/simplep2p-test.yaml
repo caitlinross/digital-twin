@@ -17,6 +17,7 @@ host_config0:
 simulation:
   packet_size: 1024
   modelnet_scheduler: fcfs
+  modelnet_order: ["simplep2p"]
   ross_message_size: 312
   net_latency_ns_file: "modelnet-test-latency.conf"
   net_bw_mbps_file: "modelnet-test-bw.conf"

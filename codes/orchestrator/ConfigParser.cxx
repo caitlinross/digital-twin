@@ -11,6 +11,7 @@
 #include "codes/orchestrator/ConfigParser.h"
 #include "codes/SupportedLPTypes.h"
 
+#include <iostream>
 #include <ross.h>
 
 #include <ross-extern.h>
@@ -119,6 +120,18 @@ bool ConfigParser::ParseConfig(const std::string& configFile)
       {
         auto parseSuccessful = ryml::atoi(child.val(), &this->SimConfig.NetworkBandwidthMbps);
         // TODO: error checking/defaults
+      }
+    }
+    else if (child.has_key())
+    {
+      if (child.key() == "modelnet_order" && child.is_seq())
+      {
+        this->SimConfig.ModelNetOrder.resize(child.num_children());
+        for (int i = 0; i < child.num_children(); i++)
+        {
+          this->SimConfig.ModelNetOrder[i] = std::string(child[i].val().str, child[i].val().len);
+          std::cout << "adding " << SimConfig.ModelNetOrder[i] << " to modelnet order" << std::endl;
+        }
       }
     }
   }

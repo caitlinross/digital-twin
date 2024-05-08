@@ -1,0 +1,27 @@
+graph network {
+
+    subgraph cluster_0 {
+        host0 -- nic0;
+        host1 -- nic1;
+        host2 -- nic2;
+        host3 -- nic3;
+        host4 -- nic4;
+        host5 -- nic5;
+        host6 -- nic6;
+        host7 -- nic7;
+        host8 -- nic8;
+        host9 -- nic9;
+        host10 -- nic10;
+        host11 -- nic11;
+        host12 -- nic12;
+        host13 -- nic13;
+        host14 -- nic14;
+        host15 -- nic15;
+    }
+
+    nic0 -- nic1 -- nic2 -- nic3 -- nic4 -- nic5 
+    nic5 -- nic6 -- nic7 -- nic8 -- nic9 -- nic10
+    nic10 -- nic11 -- nic12 -- nic13 -- nic14 
+    nic14 -- nic15 -- nic0
+
+}

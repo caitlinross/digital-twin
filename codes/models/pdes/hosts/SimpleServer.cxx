@@ -13,6 +13,7 @@
 #include "codes/mapping/Mapper.h"
 #include "codes/orchestrator/Orchestrator.h"
 #include "codes/util/CodesUtils.h"
+#include <iostream>
 
 namespace
 {
@@ -100,7 +101,7 @@ void simple_server_event(SimpleServerState* ns, tw_bf* b, SimpleServerMsg* m, tw
       handle_local_event(ns);
       break;
     default:
-      printf("\n Invalid message type %d ", m->EventType);
+      std::cerr << "\n Invalid message type " << static_cast<int>(m->EventType) << std::endl;
       assert(0);
       break;
   }
@@ -127,8 +128,6 @@ void svr_rev_event(SimpleServerState* ns, tw_bf* b, SimpleServerMsg* m, tw_lp* l
       assert(0);
       break;
   }
-
-  return;
 }
 
 void svr_finalize(SimpleServerState* ns, tw_lp* lp)
@@ -158,19 +157,14 @@ static void handle_kickoff_event(SimpleServerState* ns, SimpleServerMsg* m, tw_l
   /* record when transfers started on this server */
   ns->start_ts = tw_now(lp);
 
+  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
   /* each server sends a request to the next highest server */
-  int dest_id;
-  switch (lp->gid / 2)
-  {
-    case 0:
-      dest_id = 4;
-      break;
-    case 1:
-      dest_id = 4;
-      break;
-    case 2:
-      return; /* LP 4 doesn't send messages */
-  }
+  auto numServers = mapper->GetLPTypeCount("SimpleServer");
+  auto destRelId = (mapper->GetRelativeLPId(lp->gid) + 1) % numServers;
+
+  int dest_id = mapper->GetLPIdFromRelativeId(destRelId, "SimpleServer");
+  std::cout << "lp " << lp->gid << " sending to lp " << dest_id << std::endl;
+
   m->ret = model_net_event(NETWORK_ID, "test", dest_id, PAYLOAD_SZ, 0.0, sizeof(SimpleServerMsg),
     &m_remote, sizeof(SimpleServerMsg), &m_local, lp);
   ns->msg_sent_count++;

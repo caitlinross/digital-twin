@@ -11,14 +11,16 @@
 #ifndef SIMPLE_SERVER_H
 #define SIMPLE_SERVER_H
 
-// this is based on the modelnet-simplep2p-test.c test
+// this is based on the modelnet-simplep2p-test.c and modelnet-test.c tests
+// from the original codes lib
 
 #include <ross.h>
 
 #include "codes/model-net/model-net.h"
 
-#define NUM_REQS 3      /* number of requests sent by each server */
-#define PAYLOAD_SZ 2048 /* size of simulated data payload, bytes  */
+// TODO: make these configurable?
+#define NUM_REQS 2      /* number of requests sent by each server */
+#define PAYLOAD_SZ 4096 /* size of simulated data payload, bytes  */
 
 /* types of events that will constitute triton requests */
 enum class SimpleServerEventTypes
@@ -49,11 +51,6 @@ extern "C"
     model_net_event_return ret;
     int incremented_flag; /* helper for reverse computation */
   };
-
-  extern void SimpleServerAddLPType();
-
-  // TODO just created to make this work for now, but need to improve this
-  extern void SimpleServerSetNetId(int net_id);
 
 #ifdef __cplusplus
 }

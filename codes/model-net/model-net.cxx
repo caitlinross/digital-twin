@@ -106,11 +106,13 @@ int* model_net_configure(int* id_count)
     }
   }
 
+  auto parser = codes::Orchestrator::GetInstance().GetConfigParser();
+  auto simConfig = parser->GetSimulationConfig();
+  std::vector<std::string>& values = simConfig.ModelNetOrder;
+
   // allocate the output
   int* ids = reinterpret_cast<int*>(malloc(*id_count * sizeof(int)));
   // read the ordering provided by modelnet_order
-  // TODO: impl this
-  std::vector<std::string> values{ "simplep2p" };
   if (values.size() != (size_t)*id_count)
   {
     tw_error(TW_LOC, "number of networks in PARAMS:modelnet_order "

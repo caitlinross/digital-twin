@@ -10,6 +10,11 @@ add_test(NAME simplep2p-test
       --config-file=${CMAKE_CURRENT_SOURCE_DIR}/conf/simplep2p-test.yaml
 )
 
+add_test(NAME simplenet-test
+      COMMAND codes-digital-twin --sync=1
+      --config-file=${CMAKE_CURRENT_SOURCE_DIR}/conf/simplenet-test.yaml
+)
+
 # TODO add comparison for output
 add_executable(mapping-test mapper-test.cxx)
 target_link_libraries(mapping-test PUBLIC CODES::CODES)
