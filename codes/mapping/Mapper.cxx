@@ -511,4 +511,19 @@ std::string Mapper::GetLPTypeNameByTypeId(int id)
   return this->Parser->GetLPTypeConfigs()[id].ModelName;
 }
 
+// TODO: calc the number of each type in setup so we don't have to calc whenever it's called
+int Mapper::GetNumberOfLPsForComponentType(ComponentType type)
+{
+  const auto& lpConfigs = this->Parser->GetLPTypeConfigs();
+  int count = 0;
+  for (const auto& conf : lpConfigs)
+  {
+    if (conf.Type == type)
+    {
+      count++;
+    }
+  }
+  return count;
+}
+
 } // end namespace codes

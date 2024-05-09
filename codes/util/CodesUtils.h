@@ -18,18 +18,16 @@ namespace codes
 {
 
 /* convert ns to seconds */
-tw_stime NSToSeconds(tw_stime ns)
+inline tw_stime NSToSeconds(tw_stime ns)
 {
-  return(ns / (1000.0 * 1000.0 * 1000.0));
+  return (ns / (1000.0 * 1000.0 * 1000.0));
 }
 
 /* convert seconds to ns */
-tw_stime SecondsToNS(tw_stime ns)
+inline tw_stime SecondsToNS(tw_stime ns)
 {
-  return(ns * (1000.0 * 1000.0 * 1000.0));
+  return (ns * (1000.0 * 1000.0 * 1000.0));
 }
-
-
 
 } // end namespace codes
 

@@ -5,7 +5,7 @@ router_config0:
 
 host_config0:
   type: host
-  model: SimpleServer 
+  model: SyntheticWorkload 
   node_ids: [host0, host1, host2, host3]
 
 simulation:

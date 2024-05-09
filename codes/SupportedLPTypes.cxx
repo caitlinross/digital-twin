@@ -22,6 +22,8 @@ CodesLPTypes ConvertLPTypeNameToEnum(std::string str)
     return CodesLPTypes::SimpleP2P;
   if (str == "simplenet")
     return CodesLPTypes::SimpleNet;
+  if (str == "SyntheticWorkload")
+    return CodesLPTypes::SyntheticWorkload;
   // we'll assume it's a custom lp type at this point
   return CodesLPTypes::Custom;
 }

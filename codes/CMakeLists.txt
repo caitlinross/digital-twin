@@ -24,6 +24,7 @@ set(srcs
   models/pdes/hosts/SimpleServer.cxx
   models/pdes/routers/simplenet-upd.cxx
   models/pdes/routers/simplep2p.cxx
+  models/pdes/workloads/SyntheticWorkload.cxx
 
 # orchestrator
   orchestrator/ConfigParser.cxx
@@ -66,6 +67,7 @@ set(headers
   models/pdes/hosts/SimpleServer.h
   models/pdes/routers/simplenet-upd.h
   models/pdes/routers/simplep2p.h
+  models/pdes/workloads/SyntheticWorkload.h
 
 # orchestrator
   orchestrator/ConfigParser.h

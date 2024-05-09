@@ -20,6 +20,7 @@ enum class CodesLPTypes
   SimpleServer,
   SimpleP2P,
   SimpleNet,
+  SyntheticWorkload,
   // the following should always remain the final 3 entries in this enum
   NumberOfTypes,
   Custom,

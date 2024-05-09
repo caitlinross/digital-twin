@@ -399,23 +399,23 @@ void model_net_base_configure()
 
 void model_net_base_lp_init(model_net_base_state* ns, tw_lp* lp)
 {
-  // obtain the underlying lp type through codes-mapping
-  char lp_type_name[MAX_NAME_LENGTH], anno[MAX_NAME_LENGTH], group[MAX_NAME_LENGTH];
-  int dummy;
-
   auto mapper = codes::Orchestrator::GetInstance().GetMapper();
   ns->params = &all_params[0];
-  auto typeName = mapper->GetLPTypeName(lp->gid);
-  strncpy(lp_type_name, typeName.c_str(), typeName.size());
+  auto lp_type_name = mapper->GetLPTypeName(lp->gid);
 
   // find the corresponding method name / index
+  ns->net_id = -1;
   for (int i = 0; i < MAX_NETS; i++)
   {
-    if (strcmp(model_net_lp_config_names[i], lp_type_name) == 0)
+    if (model_net_lp_config_names[i] == lp_type_name)
     {
       ns->net_id = i;
       break;
     }
+  }
+  if (ns->net_id == -1)
+  {
+    tw_error(TW_LOC, "ns->net_id for lp gid %d was not correctly set\n", lp->gid);
   }
 
   // so for simplep2p example this should actually be 1, not 3, so it's not just simply getting the

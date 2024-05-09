@@ -108,6 +108,8 @@ public:
 
   std::string GetLPTypeNameByTypeId(int id);
 
+  int GetNumberOfLPsForComponentType(ComponentType type);
+
 private:
   // perhaps this will get the yaml parser and stuff, and then use that to
   // create all the relevant data structures for setting up the mapping
