@@ -217,8 +217,7 @@ static void base_read_config(const char* anno, model_net_base_params* p)
   uint64_t packet_size;
 
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  auto parser = orchestrator.GetConfigParser();
-  auto& simConfig = parser->GetSimulationConfig();
+  const auto& simConfig = orchestrator.GetSimulationConfig();
   packet_size = simConfig.PacketSize;
 
   if (!simConfig.ModelNetScheduler.empty())
@@ -358,9 +357,8 @@ void model_net_base_configure()
   // - the init is a little easier as we can use the LP-id to look up the
   // annotation
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  auto parser = orchestrator.GetConfigParser();
-  auto& simConfig = parser->GetSimulationConfig();
-  auto& lpConfigs = parser->GetLPTypeConfigs();
+  const auto& simConfig = orchestrator.GetSimulationConfig();
+  const auto& lpConfigs = orchestrator.GetLPTypeConfigs();
 
   // first grab all of the annotations and store locally
   // TODO: I'm not really sure about what the annotation stuff is
@@ -399,9 +397,9 @@ void model_net_base_configure()
 
 void model_net_base_lp_init(model_net_base_state* ns, tw_lp* lp)
 {
-  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
+  auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
   ns->params = &all_params[0];
-  auto lp_type_name = mapper->GetLPTypeName(lp->gid);
+  auto lp_type_name = mapper.GetLPTypeName(lp->gid);
 
   // find the corresponding method name / index
   ns->net_id = -1;
@@ -611,14 +609,14 @@ void handle_new_msg(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg* m, t
 #if DEBUG
   printf("%llu Entered handle_new_msg()\n", LLU(tw_now(lp)));
 #endif
-  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
+  auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
   static int num_servers = -1;
   static int servers_per_node = -1;
   if (num_servers == -1)
   {
     model_net_request* r = &m->msg.m_base.req;
-    std::string lp_name = mapper->GetLPTypeName(lp->gid);
-    num_servers = mapper->GetDestinationLPCount(r->src_lp, lp_name);
+    std::string lp_name = mapper.GetLPTypeName(lp->gid);
+    num_servers = mapper.GetDestinationLPCount(r->src_lp, lp_name);
     servers_per_node = num_servers / ns->params->num_queues; // this is for entire switch
     if (servers_per_node == 0)
       servers_per_node = 1;
@@ -725,10 +723,10 @@ void handle_new_msg(model_net_base_state* ns, tw_bf* b, model_net_wrap_msg* m, t
   {
     // FIXME: need to figure out what offset should be here
     int offset = 0;
-    std::string lp_name = mapper->GetLPTypeName(lp->gid);
+    std::string lp_name = mapper.GetLPTypeName(lp->gid);
     if (num_servers == -1)
     {
-      num_servers = mapper->GetDestinationLPCount(r->src_lp, lp_name);
+      num_servers = mapper.GetDestinationLPCount(r->src_lp, lp_name);
       servers_per_node = num_servers / ns->params->num_queues;
       if (servers_per_node == 0)
         servers_per_node = 1;
@@ -968,18 +966,18 @@ int model_net_method_end_sim_broadcast(tw_stime offset_ts, tw_lp* sender)
 {
   // get lp names of active model-net LPs
   // send end sim notification to each LP that match an active model-net lp name
-  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
-  for (int cid = 0; cid < mapper->GetNumberUniqueLPTypes(); cid++)
+  auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
+  for (int cid = 0; cid < mapper.GetNumberUniqueLPTypes(); cid++)
   {
-    auto lp_name = mapper->GetLPTypeNameByTypeId(cid);
+    auto lp_name = mapper.GetLPTypeNameByTypeId(cid);
     for (int n = 0; n < MAX_NETS; n++)
     {
       if (lp_name == model_net_lp_config_names[n])
       {
         // printf("ACTIVE TYPE FOUND: %s\n", lp_name);
-        for (int lid = 0; lid < mapper->GetLPTypeCount(lp_name); lid++)
+        for (int lid = 0; lid < mapper.GetLPTypeCount(lp_name); lid++)
         {
-          tw_lpid lpgid = mapper->GetLPIdFromRelativeId(lid, lp_name);
+          tw_lpid lpgid = mapper.GetLPIdFromRelativeId(lid, lp_name);
           tw_event* e = model_net_method_end_sim_notification(lpgid, offset_ts, sender);
           tw_event_send(e);
         }

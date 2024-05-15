@@ -10,7 +10,6 @@
 
 #include "codes/models/pdes/workloads/SyntheticWorkload.h"
 
-#include "codes/lp-io.h"
 #include "codes/lp-type-lookup.h"
 #include "codes/mapping/Mapper.h"
 #include "codes/model-net/model-net.h"
@@ -32,13 +31,9 @@ static double arrival_time = 1000.0;
 
 static unsigned long long num_nodes = 0;
 
-static char lp_io_dir[256] = { '\0' };
-static lp_io_handle io_handle;
 static unsigned int lp_io_use_suffix = 0;
 static int do_lp_io = 0;
 static int num_msgs = 20;
-static tw_stime sampling_interval = 800000;
-static tw_stime sampling_end_time = 1600000;
 
 /* type of synthetic traffic */
 // Only supporting Uniform for now
@@ -113,19 +108,6 @@ void svr_register_model_types()
   st_model_type_register("nw-lp", svr_get_model_stat_types());
 }
 
-// TODO: move these options to config file
-// or maybe also should be able to pass them in to the digital twin client
-const tw_optdef app_opt[] = { TWOPT_GROUP("Model net synthetic traffic "),
-  TWOPT_UINT("traffic", traffic, "UNIFORM RANDOM=1 (default) "),
-  TWOPT_UINT("num_messages", num_msgs, "Number of messages to be generated per terminal "),
-  TWOPT_STIME("sampling-interval", sampling_interval, "the sampling interval "),
-  TWOPT_STIME("sampling-end-time", sampling_end_time, "sampling end time "),
-  TWOPT_STIME("arrival_time", arrival_time, "INTER-ARRIVAL TIME"),
-  TWOPT_CHAR("lp-io-dir", lp_io_dir, "Where to place io output (unspecified -> no output"),
-  TWOPT_UINT("lp-io-use-suffix", lp_io_use_suffix,
-    "Whether to append uniq suffix to lp-io directory (default 0)"),
-  TWOPT_END() };
-
 const tw_lptype* svr_get_lp_type()
 {
   return (&SyntheticWorkloadLP);
@@ -160,8 +142,8 @@ static void issue_event(SyntheticWorkloadState* ns, tw_lp* lp)
 static void svr_init(SyntheticWorkloadState* ns, tw_lp* lp)
 {
   ns->start_ts = 0.0;
-  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
-  num_nodes = mapper->GetLPTypeCount(LP_NAME);
+  auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
+  num_nodes = mapper.GetLPTypeCount(LP_NAME);
 
   issue_event(ns, lp);
   return;
@@ -207,9 +189,9 @@ static void handle_kickoff_event(
 
   // assert(NETWORK_ID == DRAGONFLY); /* only supported for dragonfly model right now. */
   ns->start_ts = tw_now(lp);
-  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
-  int local_id = mapper->GetRelativeLPId(lp->gid);
-  std::string lp_type_name = mapper->GetLPTypeName(lp->gid);
+  auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
+  int local_id = mapper.GetRelativeLPId(lp->gid);
+  std::string lp_type_name = mapper.GetLPTypeName(lp->gid);
 
   /* in case of uniform random traffic, send to a random destination. */
   if (traffic == UNIFORM)
@@ -218,7 +200,7 @@ static void handle_kickoff_event(
     local_dest = tw_rand_integer(lp->rng, 0, num_nodes - 1);
   }
   assert(local_dest < num_nodes);
-  global_dest = mapper->GetLPIdFromRelativeId(local_dest, lp_type_name);
+  global_dest = mapper.GetLPIdFromRelativeId(local_dest, lp_type_name);
   ns->msg_sent_count++;
   m->event_rc =
     model_net_event(NETWORK_ID, "test", global_dest, PAYLOAD_SZ, 0.0, sizeof(SyntheticWorkloadMsg),

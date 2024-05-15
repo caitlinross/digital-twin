@@ -353,8 +353,8 @@ static void sp_init(sp_state* ns, tw_lp* lp)
   ns->params = &all_params[num_params - 1];
 
   /* inititalize global logical ID w.r.t. annotation */
-  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
-  ns->id = mapper->GetRelativeLPId(lp->gid);
+  auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
+  ns->id = mapper.GetRelativeLPId(lp->gid);
 
   /* all devices are idle to begin with */
   ns->send_next_idle =
@@ -624,8 +624,8 @@ static void handle_msg_start_event(sp_state* ns, sp_message* m, tw_lp* lp)
   total_event_size =
     model_net_get_msg_sz(SIMPLEP2P) + m->event_size_bytes + m->local_event_size_bytes;
 
-  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
-  dest_rel_id = mapper->GetRelativeLPId(m->dest_mn_lp);
+  auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
+  dest_rel_id = mapper.GetRelativeLPId(m->dest_mn_lp);
   m->dest_mn_rel_id = dest_rel_id;
 
   /* grab the link params */
@@ -801,15 +801,14 @@ static void sp_read_config(const char* anno, simplep2p_param* p)
 {
   // TODO: need to implement for annos
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  auto parser = orchestrator.GetConfigParser();
-  const auto& simConfig = parser->GetSimulationConfig();
-  std::string latencyFile = parser->GetParentPath() + "/" + simConfig.LatencyFileName;
-  std::string bwFile = parser->GetParentPath() + "/" + simConfig.BandwidthFileName;
+  const auto& simConfig = orchestrator.GetSimulationConfig();
+  std::string latencyFile = orchestrator.GetParentPath() + "/" + simConfig.LatencyFileName;
+  std::string bwFile = orchestrator.GetParentPath() + "/" + simConfig.BandwidthFileName;
 
-  auto mapping = orchestrator.GetMapper();
+  auto& mapper = orchestrator.GetMapper();
   // so this ends up getting the number of this type of LP for based on the group name, annotations,
   // etc.
-  p->num_lps = mapping->GetLPTypeCount(LP_CONFIG_NM);
+  p->num_lps = mapper.GetLPTypeCount(LP_CONFIG_NM);
 
   sp_set_params(latencyFile.c_str(), bwFile.c_str(), p);
   if (p->mat_len != (2 * p->num_lps))

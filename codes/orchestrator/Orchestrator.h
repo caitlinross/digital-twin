@@ -11,6 +11,8 @@
 #ifndef CODES_ORCHESTRATOR_ORCHESTRATOR_H
 #define CODES_ORCHESTRATOR_ORCHESTRATOR_H
 
+#include "codes/LPTypeConfiguration.h"
+#include "codes/SimulationConfiguration.h"
 #include "codes/SupportedLPTypes.h"
 #include "codes/mapping/Mapper.h"
 #include "codes/orchestrator/ConfigParser.h"
@@ -54,15 +56,22 @@ public:
 
   const tw_lptype* LPTypeLookup(const std::string& name);
 
-  std::shared_ptr<ConfigParser> GetConfigParser();
-
-  std::shared_ptr<Mapper> GetMapper() { return this->_Mapper; }
+  Mapper& GetMapper() { return this->_Mapper; }
 
   int GetNumberOfNetworks() { return this->NumberOfNetworks; }
 
   int* GetNetworkIds() { return this->NetworkIds; }
 
   void ReportModelNetStats();
+
+  /**
+   * Returns the directory containing the yaml file
+   */
+  std::string GetParentPath();
+
+  const SimulationConfig& GetSimulationConfig() { return this->SimConfig; }
+  const std::vector<LPTypeConfig>& GetLPTypeConfigs() { return this->LPConfigs; }
+  Agraph_t* GetGraph() { return this->Graph; }
 
 private:
   Orchestrator();
@@ -77,8 +86,14 @@ private:
 
   MPI_Comm Comm;
 
-  std::shared_ptr<ConfigParser> Parser;
-  std::shared_ptr<Mapper> _Mapper;
+  std::string ParentDir;
+
+  std::unique_ptr<ConfigParser> Parser;
+  Mapper _Mapper;
+  Agraph_t* Graph;
+
+  SimulationConfig SimConfig;
+  std::vector<LPTypeConfig> LPConfigs;
 
   // enabling automatic registration of LP types
   std::vector<RegisterLPTypeCallback> LPTypeCallbacks;

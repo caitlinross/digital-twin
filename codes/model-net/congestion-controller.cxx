@@ -714,8 +714,8 @@ void cc_router_received_packet(rlc_state* s, tw_lp* lp, unsigned int packet_size
           rc_msg->saved_term_id = term_id;
 
           // need to send abatement to it
-          auto mapper = codes::Orchestrator::GetInstance().GetMapper();
-          tw_lpid term_lpgid = mapper->GetLPIdFromRelativeId(term_id, terminal_lp_name);
+          auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
+          tw_lpid term_lpgid = mapper.GetLPIdFromRelativeId(term_id, terminal_lp_name);
           congestion_control_message* c_msg;
           tw_event* e = model_net_method_congestion_event(
             term_lpgid, s->params->notification_latency, s->lp, (void**)&c_msg, NULL);
@@ -844,8 +844,8 @@ void cc_router_congestion_check(
         // check if its abated already, then mark the additional abatement
         if (s->packet_counting_tree->is_abated_terminal(term_id) == 0)
         {
-          auto mapper = codes::Orchestrator::GetInstance().GetMapper();
-          tw_lpid term_lpgid = mapper->GetLPIdFromRelativeId(term_id, terminal_lp_name);
+          auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
+          tw_lpid term_lpgid = mapper.GetLPIdFromRelativeId(term_id, terminal_lp_name);
           congestion_control_message* c_msg;
           tw_event* e = model_net_method_congestion_event(
             term_lpgid, s->params->notification_latency, s->lp, (void**)&c_msg, NULL);
@@ -891,8 +891,8 @@ void cc_router_congestion_check(
           {
             // printf("Sending Normal\n");
             // if any are no longer marked abated at all, then send a normal signal
-            auto mapper = codes::Orchestrator::GetInstance().GetMapper();
-            tw_lpid term_lpgid = mapper->GetLPIdFromRelativeId(*it, terminal_lp_name);
+            auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
+            tw_lpid term_lpgid = mapper.GetLPIdFromRelativeId(*it, terminal_lp_name);
             congestion_control_message* c_msg;
             tw_event* e = model_net_method_congestion_event(
               term_lpgid, s->params->notification_latency, s->lp, (void**)&c_msg, NULL);

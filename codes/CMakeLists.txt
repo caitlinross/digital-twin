@@ -46,6 +46,8 @@ set(headers
   lp-io.h
   lp-msg.h
   lp-type-lookup.h
+  LPTypeConfiguration.h
+  SimulationConfiguration.h
   SupportedLPTypes.h
 
 # mapping

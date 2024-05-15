@@ -63,7 +63,6 @@ static int do_config_nets[MAX_NETS];
 void model_net_register()
 {
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  auto parser = orchestrator.GetConfigParser();
   // first set up which networks need to be registered, then pass off to base
   // LP to do its thing
   memset(do_config_nets, 0, MAX_NETS * sizeof(*do_config_nets));
@@ -72,7 +71,7 @@ void model_net_register()
   // essentially), note which ones we are using then we need to call
   // model_net_base_register to register them with ROSS. looks like we don't
   // need to update anything there
-  auto& lpConfigs = parser->GetLPTypeConfigs();
+  auto& lpConfigs = orchestrator.GetLPTypeConfigs();
   for (const auto& config : lpConfigs)
   {
     for (int n = 0; n < MAX_NETS; n++)
@@ -106,8 +105,8 @@ int* model_net_configure(int* id_count)
     }
   }
 
-  auto parser = codes::Orchestrator::GetInstance().GetConfigParser();
-  auto simConfig = parser->GetSimulationConfig();
+  auto& orchestrator = codes::Orchestrator::GetInstance();
+  auto simConfig = orchestrator.GetSimulationConfig();
   std::vector<std::string>& values = simConfig.ModelNetOrder;
 
   // allocate the output
@@ -376,8 +375,8 @@ static model_net_event_return model_net_event_impl_base(int net_id,
     struct codes_jobmap_ctx* ctx;
     ctx = congestion_control_get_jobmap();
     struct codes_jobmap_id jid;
-    auto mapper = codes::Orchestrator::GetInstance().GetMapper();
-    jid = codes_jobmap_to_local_id(mapper->GetRelativeLPId(sender->gid), ctx);
+    auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
+    jid = codes_jobmap_to_local_id(mapper.GetRelativeLPId(sender->gid), ctx);
     r->app_id = jid.job;
   }
   // this is an outgoing message

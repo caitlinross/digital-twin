@@ -503,8 +503,7 @@ static void sn_configure()
   all_params = reinterpret_cast<simplenet_param*>(malloc(num_params * sizeof(*all_params)));
 
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  auto parser = orchestrator.GetConfigParser();
-  const auto& simConfig = parser->GetSimulationConfig();
+  const auto& simConfig = orchestrator.GetSimulationConfig();
   all_params[0].net_startup_ns = simConfig.NetworkStartupNS;
   all_params[0].net_bw_mbps = simConfig.NetworkBandwidthMbps;
 }

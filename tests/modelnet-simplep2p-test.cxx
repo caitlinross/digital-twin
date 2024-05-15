@@ -123,19 +123,19 @@ int main(int argc, char** argv)
   auto& orchestrator = codes::Orchestrator::GetInstance();
   orchestrator.ParseConfig(config_file);
 
-  auto mapper = orchestrator.GetMapper();
+  auto& mapper = orchestrator.GetMapper();
 
   svr_add_lp_type();
   model_net_register();
 
-  mapper->MappingSetup();
+  mapper.MappingSetup();
 
   net_ids = model_net_configure(&num_nets);
   assert(num_nets == 1);
   net_id = *net_ids;
   free(net_ids);
 
-  num_servers = mapper->GetLPTypeCount("nw-lp");
+  num_servers = mapper.GetLPTypeCount("nw-lp");
   assert(num_servers == 3);
 
   char name[15] = "modelnet-test\0";

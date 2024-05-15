@@ -112,7 +112,7 @@ tw_lpid codes_mctx_to_lpid(
   int offset = 0;
 
   // get sender info
-  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
+  auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
   // auto sender_lpname = mapper->GetLPTypeName(sender_gid);
 
   int dest_offset;
@@ -127,7 +127,7 @@ tw_lpid codes_mctx_to_lpid(
   {
     // in this case, it needs to be the potential lps we could send to
     // not the number of lps in that type
-    int num_dest_lps = mapper->GetDestinationLPCount(sender_gid, dest_lp_name);
+    int num_dest_lps = mapper.GetDestinationLPCount(sender_gid, dest_lp_name);
     if (num_dest_lps == 0)
       tw_error(TW_LOC,
         "ERROR: Found no LPs of type %s "
@@ -162,5 +162,5 @@ tw_lpid codes_mctx_to_lpid(
   else
     assert(0);
 
-  return mapper->GetDestinationLPId(sender_gid, dest_lp_name, dest_offset);
+  return mapper.GetDestinationLPId(sender_gid, dest_lp_name, dest_offset);
 }

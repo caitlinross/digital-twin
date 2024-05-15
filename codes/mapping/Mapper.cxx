@@ -16,14 +16,12 @@
 
 #include "codes/lp-type-lookup.h"
 #include "codes/mapping/Mapper.h"
-#include "codes/orchestrator/ConfigParser.h"
 #include "codes/orchestrator/Orchestrator.h"
 
 #include <graphviz/cgraph.h>
 
 #include <iostream>
 #include <memory>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -39,8 +37,8 @@ namespace codes
 void codesMappingInit()
 {
   auto& orchestrator = Orchestrator::GetInstance();
-  auto self = orchestrator.GetMapper();
-  self->MappingInit();
+  auto& self = orchestrator.GetMapper();
+  self.MappingInit();
 }
 
 tw_lp* codesMappingToLP(tw_lpid lpid)
@@ -48,15 +46,15 @@ tw_lp* codesMappingToLP(tw_lpid lpid)
   // a little weird, but we need to pass a function pointer to ROSS, but
   // we can't provide a pointer to a non-static member function.
   auto& orchestrator = Orchestrator::GetInstance();
-  auto self = orchestrator.GetMapper();
-  return self->MappingToLP(lpid);
+  auto& self = orchestrator.GetMapper();
+  return self.MappingToLP(lpid);
 }
 
 tw_peid CodesMapping(tw_lpid gid)
 {
   auto& orchestrator = Orchestrator::GetInstance();
-  auto self = orchestrator.GetMapper();
-  return self->GlobalMapping(gid);
+  auto& self = orchestrator.GetMapper();
+  return self.GlobalMapping(gid);
 }
 
 // simple class for keeping track of the graph
@@ -107,17 +105,21 @@ int findConfigIndex(const std::vector<LPTypeConfig>& lpConfigs, const std::strin
   return -1;
 }
 
-Mapper::Mapper(std::shared_ptr<ConfigParser> parser)
-  : Parser(parser)
+Mapper::Mapper() {}
+
+Mapper::~Mapper()
 {
-  // construct the nodes
-  const auto& lpConfigs = this->Parser->GetLPTypeConfigs();
-  auto graph = this->Parser->GetGraph();
+  for (int i = 0; i < this->Nodes.size(); i++)
+  {
+    if (this->Nodes[i])
+    {
+      delete this->Nodes[i];
+    }
+  }
+}
 
-  std::set<std::string> uniqueNodes;
-  this->Nodes.resize(agnnodes(graph));
-  int nodesIdx = 0;
-
+void Mapper::Init()
+{
   this->MappingConfig();
   this->SetupConnections();
 
@@ -130,14 +132,13 @@ Mapper::Mapper(std::shared_ptr<ConfigParser> parser)
 #endif
 }
 
-Mapper::~Mapper() = default;
-
 void Mapper::MappingConfig()
 {
   // on our first pass through the graph, lets just create the Node objects along with setting their
   // global LP id. then on the next pass we can set up the connections
-  auto graph = this->Parser->GetGraph();
-  const auto& lpConfigs = this->Parser->GetLPTypeConfigs();
+  auto& orchestrator = codes::Orchestrator::GetInstance();
+  auto graph = orchestrator.GetGraph();
+  const auto& lpConfigs = orchestrator.GetLPTypeConfigs();
   this->Nodes.resize(agnnodes(graph));
   int nodesIdx = 0;
 
@@ -156,8 +157,8 @@ void Mapper::MappingConfig()
         continue;
       }
       this->NodeNameToIdMap.insert(std::make_pair(agnameof(v), nodesIdx));
-      this->Nodes[nodesIdx] = std::make_unique<Node>();
-      auto node = this->Nodes[nodesIdx].get();
+      this->Nodes[nodesIdx] = new Node;
+      auto node = this->Nodes[nodesIdx];
       node->NodeName = agnameof(v);
       node->GlobalId = nodesIdx;
       node->ConfigIdx = findConfigIndex(lpConfigs, node->NodeName);
@@ -175,7 +176,8 @@ void Mapper::MappingConfig()
 
 void Mapper::ProcessEdges(Agraph_t* graph, Agnode_t* vertex, int& nodesIdx)
 {
-  const auto& lpConfigs = this->Parser->GetLPTypeConfigs();
+  auto& orchestrator = codes::Orchestrator::GetInstance();
+  const auto& lpConfigs = orchestrator.GetLPTypeConfigs();
   for (Agedge_t* e = agfstout(graph, vertex); e; e = agnxtout(graph, e))
   {
     Agnode_t* connVertex = e->node;
@@ -183,8 +185,8 @@ void Mapper::ProcessEdges(Agraph_t* graph, Agnode_t* vertex, int& nodesIdx)
     if (this->NodeNameToIdMap.count(agnameof(connVertex)) == 0)
     {
       this->NodeNameToIdMap.insert(std::make_pair(agnameof(connVertex), nodesIdx));
-      this->Nodes[nodesIdx] = std::make_unique<Node>();
-      auto connNode = this->Nodes[nodesIdx].get();
+      this->Nodes[nodesIdx] = new Node;
+      auto connNode = this->Nodes[nodesIdx];
       connNode->NodeName = agnameof(connVertex);
       connNode->GlobalId = nodesIdx;
       connNode->ConfigIdx = findConfigIndex(lpConfigs, connNode->NodeName);
@@ -196,14 +198,15 @@ void Mapper::ProcessEdges(Agraph_t* graph, Agnode_t* vertex, int& nodesIdx)
 void Mapper::SetupConnections()
 {
   // now go through the graph again but since all nodes are created, we can set the connections
-  auto graph = this->Parser->GetGraph();
+  auto& orchestrator = codes::Orchestrator::GetInstance();
+  auto graph = orchestrator.GetGraph();
   for (Agnode_t* v = agfstnode(graph); v; v = agnxtnode(graph, v))
   {
     if (this->NodeNameToIdMap.count(agnameof(v)) == 0)
     {
       tw_error(TW_LOC, "node %s does not exist in the NodeNameToIdMap", agnameof(v));
     }
-    auto vertexNode = this->Nodes[this->NodeNameToIdMap[agnameof(v)]].get();
+    auto vertexNode = this->Nodes[this->NodeNameToIdMap[agnameof(v)]];
     for (Agedge_t* e = agfstout(graph, v); e; e = agnxtout(graph, e))
     {
       // instead need to figure out who each vertex is attached to
@@ -212,7 +215,7 @@ void Mapper::SetupConnections()
         tw_error(TW_LOC, "node %s does not exist in the NodeNameToIdMap", agnameof(e->node));
       }
 
-      auto connNode = this->Nodes[this->NodeNameToIdMap[agnameof(e->node)]].get();
+      auto connNode = this->Nodes[this->NodeNameToIdMap[agnameof(e->node)]];
       vertexNode->Connections.push_back(connNode);
       connNode->Connections.push_back(vertexNode);
     }
@@ -234,7 +237,8 @@ void Mapper::MappingSetup(int offset)
   g_tw_custom_initial_mapping = &codesMappingInit;
   g_tw_custom_lp_global_to_local_map = &codesMappingToLP;
 
-  const auto& simConfig = this->Parser->GetSimulationConfig();
+  auto& orchestrator = codes::Orchestrator::GetInstance();
+  const auto& simConfig = orchestrator.GetSimulationConfig();
 
   // configure mem-factor
   // TODO:
@@ -289,7 +293,7 @@ void Mapper::MappingInit()
   const tw_lptype* lptype;
   const st_model_types* trace_type;
 
-  const auto& lpConfigs = this->Parser->GetLPTypeConfigs();
+  const auto& lpConfigs = codes::Orchestrator::GetInstance().GetLPTypeConfigs();
 
   /* have 16 kps per pe, this is the optimized configuration for ROSS custom mapping */
   for (kpid = 0; kpid < g_tw_nkp; kpid++)
@@ -371,7 +375,7 @@ tw_lp* Mapper::MappingToLP(tw_lpid lpid)
 void Mapper::GetLPTypeInfo(tw_lpid gid, std::string& lp_type_name, int& offset)
 {
   auto configIdx = this->Nodes[gid]->ConfigIdx;
-  auto& lpConfig = this->Parser->GetLPTypeConfigs()[configIdx];
+  auto& lpConfig = codes::Orchestrator::GetInstance().GetLPTypeConfigs()[configIdx];
   lp_type_name = lpConfig.ModelName;
   offset = -1;
   for (int i = 0; i < lpConfig.NodeNames.size(); i++)
@@ -392,7 +396,7 @@ void Mapper::GetLPTypeInfo(tw_lpid gid, std::string& lp_type_name, int& offset)
 std::string Mapper::GetLPTypeName(tw_lpid gid)
 {
   auto configIdx = this->Nodes[gid]->ConfigIdx;
-  return this->Parser->GetLPTypeConfigs()[configIdx].ModelName;
+  return codes::Orchestrator::GetInstance().GetLPTypeConfigs()[configIdx].ModelName;
 }
 
 int Mapper::GetLPTypeCount(const std::string& lp_type_name)
@@ -401,7 +405,7 @@ int Mapper::GetLPTypeCount(const std::string& lp_type_name)
   // to different types of ML models? or maybe the ML model doesn't actually matter here,
   // we just need to know the number of LPs of this type regardless of what ML model they're using
   int count = 0;
-  const auto& lpConfigs = this->Parser->GetLPTypeConfigs();
+  const auto& lpConfigs = codes::Orchestrator::GetInstance().GetLPTypeConfigs();
   for (const auto& conf : lpConfigs)
   {
     if (conf.ModelName == lp_type_name)
@@ -415,7 +419,7 @@ int Mapper::GetLPTypeCount(const std::string& lp_type_name)
 tw_lpid Mapper::GetLPId(const std::string& lp_type_name, int offset)
 {
   tw_lpid gid;
-  auto& lpConfigs = this->Parser->GetLPTypeConfigs();
+  auto& lpConfigs = codes::Orchestrator::GetInstance().GetLPTypeConfigs();
   for (auto& config : lpConfigs)
   {
     if (lp_type_name == config.ModelName)
@@ -437,11 +441,10 @@ int Mapper::GetRelativeLPId(tw_lpid gid)
 {
   // so some lp types (e.g., simplep2p) needs to know how many others of its type there are
   // and uses the relative ids within that lp type to keep track of things (like latencies)
-  auto node = this->Nodes[gid].get();
+  auto node = this->Nodes[gid];
   auto& configIdx = node->ConfigIdx;
-  auto& lpConfig = this->Parser->GetLPTypeConfigs()[configIdx];
-  int i;
-  for (i = 0; i < lpConfig.NodeNames.size(); i++)
+  auto& lpConfig = codes::Orchestrator::GetInstance().GetLPTypeConfigs()[configIdx];
+  for (int i = 0; i < lpConfig.NodeNames.size(); i++)
   {
     if (node->NodeName == lpConfig.NodeNames[i])
     {
@@ -453,7 +456,7 @@ int Mapper::GetRelativeLPId(tw_lpid gid)
 
 tw_lpid Mapper::GetLPIdFromRelativeId(int rel_id, const std::string& lp_type_name)
 {
-  for (auto& lpConfig : this->Parser->GetLPTypeConfigs())
+  for (auto& lpConfig : codes::Orchestrator::GetInstance().GetLPTypeConfigs())
   {
     if (lpConfig.ModelName == lp_type_name)
     {
@@ -471,7 +474,7 @@ tw_lpid Mapper::GetLPIdFromRelativeId(int rel_id, const std::string& lp_type_nam
 
 tw_lpid Mapper::GetDestinationLPId(tw_lpid sender_gid, const std::string& dest_lp_name, int offset)
 {
-  auto senderNode = this->Nodes[sender_gid].get();
+  auto senderNode = this->Nodes[sender_gid];
   auto conn = senderNode->Connections[offset];
   if (!conn)
   {
@@ -488,8 +491,8 @@ int Mapper::GetDestinationLPCount(tw_lpid sender_gid, const std::string& dest_lp
 {
   // given the sender_gid, we need to get the number of its connections of type dest_lp_name
   int count = 0;
-  auto& lpConfigs = this->Parser->GetLPTypeConfigs();
-  auto senderNode = this->Nodes[sender_gid].get();
+  auto& lpConfigs = codes::Orchestrator::GetInstance().GetLPTypeConfigs();
+  auto senderNode = this->Nodes[sender_gid];
   for (auto conn : senderNode->Connections)
   {
     if (conn && lpConfigs[conn->ConfigIdx].ModelName == dest_lp_name)
@@ -503,18 +506,18 @@ int Mapper::GetDestinationLPCount(tw_lpid sender_gid, const std::string& dest_lp
 
 int Mapper::GetNumberUniqueLPTypes()
 {
-  return this->Parser->GetLPTypeConfigs().size();
+  return codes::Orchestrator::GetInstance().GetLPTypeConfigs().size();
 }
 
 std::string Mapper::GetLPTypeNameByTypeId(int id)
 {
-  return this->Parser->GetLPTypeConfigs()[id].ModelName;
+  return codes::Orchestrator::GetInstance().GetLPTypeConfigs()[id].ModelName;
 }
 
 // TODO: calc the number of each type in setup so we don't have to calc whenever it's called
 int Mapper::GetNumberOfLPsForComponentType(ComponentType type)
 {
-  const auto& lpConfigs = this->Parser->GetLPTypeConfigs();
+  const auto& lpConfigs = codes::Orchestrator::GetInstance().GetLPTypeConfigs();
   int count = 0;
   for (const auto& conf : lpConfigs)
   {

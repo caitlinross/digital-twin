@@ -16,13 +16,13 @@ namespace codes
 CodesLPTypes ConvertLPTypeNameToEnum(std::string str)
 {
   // TODO: convert to all lower, and perhaps just do a find?
-  if (str == "SimpleServer")
+  if (str.find("SimpleServer") != std::string::npos)
     return CodesLPTypes::SimpleServer;
-  if (str == "simplep2p")
+  if (str.find("simplep2p") != std::string::npos)
     return CodesLPTypes::SimpleP2P;
-  if (str == "simplenet")
+  if (str.find("simplenet") != std::string::npos)
     return CodesLPTypes::SimpleNet;
-  if (str == "SyntheticWorkload")
+  if (str.find("SyntheticWorkload") != std::string::npos)
     return CodesLPTypes::SyntheticWorkload;
   // we'll assume it's a custom lp type at this point
   return CodesLPTypes::Custom;

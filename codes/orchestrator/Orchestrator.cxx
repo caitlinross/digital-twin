@@ -15,6 +15,7 @@
 #include "codes/model-net/model-net.h"
 #include "codes/orchestrator/ConfigParser.h"
 
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <ross.h>
@@ -27,7 +28,7 @@ bool Orchestrator::Destroyed = false;
 
 Orchestrator::Orchestrator()
   : Comm(MPI_COMM_WORLD)
-  , Parser(std::make_shared<ConfigParser>())
+  , Parser(std::make_unique<ConfigParser>())
   , LPTypeCallbacks(static_cast<int>(CodesLPTypes::NumberOfTypes))
   , NetworkIdCallbacks(static_cast<int>(CodesLPTypes::NumberOfTypes))
 {
@@ -58,11 +59,6 @@ void Orchestrator::CreateInstance()
   Instance = &theInstance;
 }
 
-std::shared_ptr<ConfigParser> Orchestrator::GetConfigParser()
-{
-  return this->Parser;
-}
-
 void Orchestrator::ParseConfig(const std::string& configFileName)
 {
   if (configFileName.empty())
@@ -70,8 +66,18 @@ void Orchestrator::ParseConfig(const std::string& configFileName)
     // TODO error
   }
 
+  std::filesystem::path yamlPath(configFileName);
+  if (!std::filesystem::exists(yamlPath))
+  {
+    tw_error(TW_LOC, "the config file %s does not exist", configFileName.c_str());
+  }
+
+  this->ParentDir = yamlPath.parent_path();
   this->Parser->ParseConfig(configFileName);
-  this->_Mapper = std::make_shared<Mapper>(this->Parser);
+  this->SimConfig = this->Parser->GetSimulationConfig();
+  this->LPConfigs = this->Parser->GetLPTypeConfigs();
+  this->Graph = this->Parser->ParseGraphVizConfig();
+  this->_Mapper.Init();
 }
 
 void Orchestrator::ConfigureSimulation(const std::string& configFileName)
@@ -80,7 +86,7 @@ void Orchestrator::ConfigureSimulation(const std::string& configFileName)
 
   // right now we're registering all non-model-net lps here
   // TODO: eventually make all LPs registered this way?
-  for (const auto& config : this->Parser->GetLPTypeConfigs())
+  for (const auto& config : this->LPConfigs)
   {
     RegisterLPTypeCallback callback = nullptr;
     if (config.ModelType == CodesLPTypes::Custom)
@@ -102,7 +108,7 @@ void Orchestrator::ConfigureSimulation(const std::string& configFileName)
   }
 
   model_net_register();
-  this->_Mapper->MappingSetup();
+  this->_Mapper.MappingSetup();
 
   this->NetworkIds = model_net_configure(&this->NumberOfNetworks);
   int net_id = this->NetworkIds[0];
@@ -111,7 +117,7 @@ void Orchestrator::ConfigureSimulation(const std::string& configFileName)
   // we need to figure out how to generally handle this. I think we'll also need to handle the case
   // where different instances of servers will need to connect to different types of model-net lps
   // so how to figure that out?
-  for (const auto& config : this->Parser->GetLPTypeConfigs())
+  for (const auto& config : this->LPConfigs)
   {
     RegisterNetworkIdCallback callback = nullptr;
     if (config.ModelType == CodesLPTypes::Custom)
@@ -186,6 +192,11 @@ void Orchestrator::ReportModelNetStats()
   {
     model_net_report_stats(this->NetworkIds[i]);
   }
+}
+
+std::string Orchestrator::GetParentPath()
+{
+  return this->ParentDir;
 }
 
 } // end namespace codes

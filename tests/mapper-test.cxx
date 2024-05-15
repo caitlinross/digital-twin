@@ -21,9 +21,9 @@ static void init(state* ns, tw_lp* lp)
 {
   int dummy;
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  auto mapper = orchestrator.GetMapper();
+  auto& mapper = orchestrator.GetMapper();
 
-  ns->lp_name = mapper->GetLPTypeName(lp->gid);
+  ns->lp_name = mapper.GetLPTypeName(lp->gid);
 }
 
 tw_lptype a_lp = {
@@ -86,25 +86,25 @@ int main(int argc, char* argv[])
   lp_type_register("b", &b_lp);
   lp_type_register("c", &c_lp);
 
-  auto mapper = orchestrator.GetMapper();
-  mapper->MappingSetup();
+  auto& mapper = orchestrator.GetMapper();
+  mapper.MappingSetup();
 
-  if (mapper->GetLPTypeCount("a") != 7)
+  if (mapper.GetLPTypeCount("a") != 7)
   {
     std::cout << "Incorrect number of LPs of type 'a'. Expected 7, got "
-              << mapper->GetLPTypeCount("a");
+              << mapper.GetLPTypeCount("a");
     return EXIT_FAILURE;
   }
-  if (mapper->GetLPTypeCount("b") != 7)
+  if (mapper.GetLPTypeCount("b") != 7)
   {
     std::cout << "Incorrect number of LPs of type 'b'. Expected 7, got "
-              << mapper->GetLPTypeCount("c");
+              << mapper.GetLPTypeCount("c");
     return EXIT_FAILURE;
   }
-  if (mapper->GetLPTypeCount("c") != 12)
+  if (mapper.GetLPTypeCount("c") != 12)
   {
     std::cout << "Incorrect number of LPs of type 'c'. Expected 12, got "
-              << mapper->GetLPTypeCount("c");
+              << mapper.GetLPTypeCount("c");
     return EXIT_FAILURE;
   }
 
@@ -118,16 +118,16 @@ int main(int argc, char* argv[])
   {
     std::string lp_type_name;
     int offset;
-    mapper->GetLPTypeInfo(i, lp_type_name, offset);
+    mapper.GetLPTypeInfo(i, lp_type_name, offset);
     std::cout << "gid: " << i << " type: " << lp_type_name << " offset: " << offset << std::endl;
-    auto gid = mapper->GetLPId(lp_type_name, offset);
+    auto gid = mapper.GetLPId(lp_type_name, offset);
     if (gid != i)
     {
       std::cout << "could not retrive correct lp id. expected " << i << ", got " << gid
                 << std::endl;
     }
 
-    auto relative_id = mapper->GetRelativeLPId(i);
+    auto relative_id = mapper.GetRelativeLPId(i);
     if (relative_id != offset)
     {
       std::cout << "did not get correct relative id for lp " << i << ". expected " << offset

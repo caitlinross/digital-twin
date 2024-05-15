@@ -157,12 +157,12 @@ static void handle_kickoff_event(SimpleServerState* ns, SimpleServerMsg* m, tw_l
   /* record when transfers started on this server */
   ns->start_ts = tw_now(lp);
 
-  auto mapper = codes::Orchestrator::GetInstance().GetMapper();
+  auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
   /* each server sends a request to the next highest server */
-  auto numServers = mapper->GetLPTypeCount("SimpleServer");
-  auto destRelId = (mapper->GetRelativeLPId(lp->gid) + 1) % numServers;
+  auto numServers = mapper.GetLPTypeCount("SimpleServer");
+  auto destRelId = (mapper.GetRelativeLPId(lp->gid) + 1) % numServers;
 
-  int dest_id = mapper->GetLPIdFromRelativeId(destRelId, "SimpleServer");
+  int dest_id = mapper.GetLPIdFromRelativeId(destRelId, "SimpleServer");
   std::cout << "lp " << lp->gid << " sending to lp " << dest_id << std::endl;
 
   m->ret = model_net_event(NETWORK_ID, "test", dest_id, PAYLOAD_SZ, 0.0, sizeof(SimpleServerMsg),
