@@ -107,7 +107,7 @@ int* model_net_configure(int* id_count)
 
   auto& orchestrator = codes::Orchestrator::GetInstance();
   auto simConfig = orchestrator.GetSimulationConfig();
-  std::vector<std::string>& values = simConfig.ModelNetOrder;
+  std::vector<std::string>& values = simConfig.GetStringElements("modelnet_order");
 
   // allocate the output
   int* ids = reinterpret_cast<int*>(malloc(*id_count * sizeof(int)));

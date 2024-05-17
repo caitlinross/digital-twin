@@ -801,9 +801,10 @@ static void sp_read_config(const char* anno, simplep2p_param* p)
 {
   // TODO: need to implement for annos
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  const auto& simConfig = orchestrator.GetSimulationConfig();
-  std::string latencyFile = orchestrator.GetParentPath() + "/" + simConfig.LatencyFileName;
-  std::string bwFile = orchestrator.GetParentPath() + "/" + simConfig.BandwidthFileName;
+  auto& simConfig = orchestrator.GetSimulationConfig();
+  std::string latencyFile =
+    orchestrator.GetParentPath() + "/" + simConfig.GetString("net_latency_ns_file");
+  std::string bwFile = orchestrator.GetParentPath() + "/" + simConfig.GetString("net_bw_mbps_file");
 
   auto& mapper = orchestrator.GetMapper();
   // so this ends up getting the number of this type of LP for based on the group name, annotations,

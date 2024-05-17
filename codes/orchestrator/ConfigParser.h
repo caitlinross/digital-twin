@@ -11,8 +11,8 @@
 #ifndef CODES_YAML_PARSER_H
 #define CODES_YAML_PARSER_H
 
+#include "codes/CodesPropertyCollection.h"
 #include "codes/LPTypeConfiguration.h"
-#include "codes/SimulationConfiguration.h"
 
 #include <graphviz/cgraph.h>
 
@@ -44,7 +44,7 @@ public:
   /**
    * Returns the general simulation settings
    */
-  SimulationConfig GetSimulationConfig();
+  CodesPropertyCollection GetSimulationConfig();
 
   Agraph_t* ParseGraphVizConfig();
 

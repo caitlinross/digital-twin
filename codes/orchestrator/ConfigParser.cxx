@@ -9,9 +9,11 @@
 //============================================================================
 
 #include "codes/orchestrator/ConfigParser.h"
+#include "codes/CodesPropertyCollection.h"
+#include "codes/LPTypeConfiguration.h"
 #include "codes/SupportedLPTypes.h"
 
-#include <iostream>
+#include <c4/yml/node.hpp>
 #include <ross.h>
 
 #include <ross-extern.h>
@@ -28,6 +30,74 @@ namespace codes
 
 namespace
 {
+
+void HandleKeyValueConfigOption(ryml::ConstNodeRef node, CodesPropertyCollection& properties)
+{
+  std::string propName = std::string(node.key().str, node.key().len);
+  if (node.val().is_integer())
+  {
+    auto& prop = properties.MakeProperty(propName, PropertyType::Int);
+    int value;
+    auto parseSuccessful = ryml::atoi(node.val(), &value);
+    prop.Set(value);
+  }
+  else if (node.val().is_real())
+  {
+    auto& prop = properties.MakeProperty(propName, PropertyType::Double);
+    double value;
+    auto parseSuccessful = ryml::atod(node.val(), &value);
+    prop.Set(value);
+  }
+  else
+  {
+    // assume string?
+    auto& prop = properties.MakeProperty(propName, PropertyType::String);
+    std::string value = std::string(node.val().str, node.val().len);
+    prop.Set(value);
+  }
+}
+
+void HandleKeyVectorConfigOption(ryml::ConstNodeRef node, CodesPropertyCollection& properties)
+{
+  if (!node.is_seq())
+  {
+    return;
+  }
+  std::string propName = std::string(node.key().str, node.key().len);
+  auto numElements = node.num_children();
+  if (numElements == 0)
+    return;
+
+  if (node[0].val().is_integer())
+  {
+    auto& prop = properties.MakeProperty(propName, PropertyType::Int, numElements);
+    for (int i = 0; i < numElements; i++)
+    {
+      int value;
+      auto parseSuccessful = ryml::atoi(node[i].val(), &value);
+      prop.Set(value, i);
+    }
+  }
+  else if (node[0].val().is_real())
+  {
+    auto& prop = properties.MakeProperty(propName, PropertyType::Double, numElements);
+    for (int i = 0; i < numElements; i++)
+    {
+      double value;
+      auto parseSuccessful = ryml::atod(node[i].val(), &value);
+      prop.Set(value, i);
+    }
+  }
+  else
+  {
+    auto& prop = properties.MakeProperty(propName, PropertyType::String, numElements);
+    for (int i = 0; i < numElements; i++)
+    {
+      std::string value = std::string(node[i].val().str, node[i].val().len);
+      prop.Set(value, i);
+    }
+  }
+}
 
 void RecurseConfig(ryml::ConstNodeRef root, std::vector<LPTypeConfig>& lpConfigs, int lpTypeIndex)
 {
@@ -52,6 +122,10 @@ void RecurseConfig(ryml::ConstNodeRef root, std::vector<LPTypeConfig>& lpConfigs
     {
       lpConfig.ModelName = std::string(root.val().str, root.val().len);
       lpConfig.ModelType = ConvertLPTypeNameToEnum(lpConfig.ModelName);
+    }
+    else
+    {
+      HandleKeyValueConfigOption(root, lpConfig.Properties);
     }
     return;
   }
@@ -142,10 +216,10 @@ std::vector<LPTypeConfig> ConfigParser::GetLPTypeConfigs()
   return lpConfigs;
 }
 
-SimulationConfig ConfigParser::GetSimulationConfig()
+CodesPropertyCollection ConfigParser::GetSimulationConfig()
 {
   ryml::ConstNodeRef root = this->Tree.rootref();
-  SimulationConfig simConfig;
+  CodesPropertyCollection simConfig;
   // handle the simulation config section
   if (!root["simulation"].has_key() && !root["simulation"].is_map())
   {
@@ -155,49 +229,11 @@ SimulationConfig ConfigParser::GetSimulationConfig()
   {
     if (child.is_keyval())
     {
-      if (child.key() == "packet_size")
-      {
-        auto parseSuccessful = ryml::atoi(child.val(), &simConfig.PacketSize);
-        // TODO: error checking/defaults
-      }
-      else if (child.key() == "modelnet_scheduler")
-      {
-        simConfig.ModelNetScheduler = std::string(child.val().str, child.val().len);
-      }
-      else if (child.key() == "ross_message_size")
-      {
-        auto parseSuccessful = ryml::atoi(child.val(), &simConfig.ROSSMessageSize);
-        // TODO: error checking/defaults
-      }
-      else if (child.key() == "net_latency_ns_file")
-      {
-        simConfig.LatencyFileName = std::string(child.val().str, child.val().len);
-      }
-      else if (child.key() == "net_bw_mbps_file")
-      {
-        simConfig.BandwidthFileName = std::string(child.val().str, child.val().len);
-      }
-      else if (child.key() == "net_startup_ns")
-      {
-        auto parseSuccessful = ryml::atod(child.val(), &simConfig.NetworkStartupNS);
-        // TODO: error checking/defaults
-      }
-      else if (child.key() == "net_bw_mbps")
-      {
-        auto parseSuccessful = ryml::atoi(child.val(), &simConfig.NetworkBandwidthMbps);
-        // TODO: error checking/defaults
-      }
+      HandleKeyValueConfigOption(child, simConfig);
     }
-    else if (child.has_key())
+    else if (child.has_key() && child.is_seq())
     {
-      if (child.key() == "modelnet_order" && child.is_seq())
-      {
-        simConfig.ModelNetOrder.resize(child.num_children());
-        for (int i = 0; i < child.num_children(); i++)
-        {
-          simConfig.ModelNetOrder[i] = std::string(child[i].val().str, child[i].val().len);
-        }
-      }
+      HandleKeyVectorConfigOption(child, simConfig);
     }
   }
   return simConfig;

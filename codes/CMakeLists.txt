@@ -4,6 +4,8 @@ set(srcs
   lp-msg.c
   lp-type-lookup.c
   SupportedLPTypes.cxx
+  CodesProperty.cxx
+  CodesPropertyCollection.cxx
 
 # mapping
   mapping/Mapper.cxx
@@ -47,8 +49,9 @@ set(headers
   lp-msg.h
   lp-type-lookup.h
   LPTypeConfiguration.h
-  SimulationConfiguration.h
   SupportedLPTypes.h
+  CodesProperty.h
+  CodesPropertyCollection.h
 
 # mapping
   mapping/Mapper.h

@@ -217,15 +217,16 @@ static void base_read_config(const char* anno, model_net_base_params* p)
   uint64_t packet_size;
 
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  const auto& simConfig = orchestrator.GetSimulationConfig();
-  packet_size = simConfig.PacketSize;
+  auto& simConfig = orchestrator.GetSimulationConfig();
+  packet_size = simConfig.GetInt("packet_size");
 
-  if (!simConfig.ModelNetScheduler.empty())
+  auto scheduler = simConfig.GetString("modelnet_scheduler");
+  if (!scheduler.empty())
   {
     int i;
     for (i = 0; i < MAX_SCHEDS; i++)
     {
-      if (sched_names[i] == simConfig.ModelNetScheduler)
+      if (sched_names[i] == scheduler)
       {
         p->sched_params.type = static_cast<sched_type>(i);
         break;
@@ -236,7 +237,7 @@ static void base_read_config(const char* anno, model_net_base_params* p)
       tw_error(TW_LOC,
         "Unknown value for PARAMS:modelnet-scheduler : "
         "%s",
-        simConfig.ModelNetScheduler.c_str());
+        scheduler.c_str());
     }
   }
   else
@@ -357,7 +358,6 @@ void model_net_base_configure()
   // - the init is a little easier as we can use the LP-id to look up the
   // annotation
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  const auto& simConfig = orchestrator.GetSimulationConfig();
   const auto& lpConfigs = orchestrator.GetLPTypeConfigs();
 
   // first grab all of the annotations and store locally

@@ -11,6 +11,7 @@
 #ifndef LP_TYPE_CONFIGURATION_H
 #define LP_TYPE_CONFIGURATION_H
 
+#include "codes/CodesPropertyCollection.h"
 #include "codes/SupportedLPTypes.h"
 
 #include <string>
@@ -36,6 +37,9 @@ struct LPTypeConfig
   std::string ModelName;  // the codes LP name
   CodesLPTypes ModelType;
   std::vector<std::string> NodeNames;
+
+  // store properties for this LP type
+  CodesPropertyCollection Properties;
 };
 
 }

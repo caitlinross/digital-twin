@@ -238,7 +238,7 @@ void Mapper::MappingSetup(int offset)
   g_tw_custom_lp_global_to_local_map = &codesMappingToLP;
 
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  const auto& simConfig = orchestrator.GetSimulationConfig();
+  auto& simConfig = orchestrator.GetSimulationConfig();
 
   // configure mem-factor
   // TODO:
@@ -264,7 +264,7 @@ void Mapper::MappingSetup(int offset)
   g_tw_nRNG_per_lp++;
   g_tw_nRNG_per_lp++; // Congestion Control gets its own RNG - second to last (CLL is last)
 
-  tw_define_lps(this->GetLPsForPE(), simConfig.ROSSMessageSize);
+  tw_define_lps(this->GetLPsForPE(), simConfig.GetInt("ross_message_size"));
 
   // use a similar computation to codes_mapping_init to compute the lpids and
   // offsets to use in tw_rand_initial_seed

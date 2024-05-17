@@ -11,8 +11,8 @@
 #ifndef CODES_ORCHESTRATOR_ORCHESTRATOR_H
 #define CODES_ORCHESTRATOR_ORCHESTRATOR_H
 
+#include "codes/CodesPropertyCollection.h"
 #include "codes/LPTypeConfiguration.h"
-#include "codes/SimulationConfiguration.h"
 #include "codes/SupportedLPTypes.h"
 #include "codes/mapping/Mapper.h"
 #include "codes/orchestrator/ConfigParser.h"
@@ -69,7 +69,7 @@ public:
    */
   std::string GetParentPath();
 
-  const SimulationConfig& GetSimulationConfig() { return this->SimConfig; }
+  CodesPropertyCollection& GetSimulationConfig() { return this->SimConfig; }
   const std::vector<LPTypeConfig>& GetLPTypeConfigs() { return this->LPConfigs; }
   Agraph_t* GetGraph() { return this->Graph; }
 
@@ -92,7 +92,7 @@ private:
   Mapper _Mapper;
   Agraph_t* Graph;
 
-  SimulationConfig SimConfig;
+  CodesPropertyCollection SimConfig;
   std::vector<LPTypeConfig> LPConfigs;
 
   // enabling automatic registration of LP types

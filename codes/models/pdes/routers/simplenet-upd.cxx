@@ -503,9 +503,9 @@ static void sn_configure()
   all_params = reinterpret_cast<simplenet_param*>(malloc(num_params * sizeof(*all_params)));
 
   auto& orchestrator = codes::Orchestrator::GetInstance();
-  const auto& simConfig = orchestrator.GetSimulationConfig();
-  all_params[0].net_startup_ns = simConfig.NetworkStartupNS;
-  all_params[0].net_bw_mbps = simConfig.NetworkBandwidthMbps;
+  auto& simConfig = orchestrator.GetSimulationConfig();
+  all_params[0].net_startup_ns = simConfig.GetDouble("net_startup_ns");
+  all_params[0].net_bw_mbps = simConfig.GetInt("net_bw_mbps");
 }
 
 static void simplenet_packet_event_rc(tw_lp* sender)
