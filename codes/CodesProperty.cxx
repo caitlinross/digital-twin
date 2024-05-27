@@ -117,28 +117,21 @@ unsigned int CodesProperty::GetNumberOfElements()
 
 void CodesProperty::Set(bool value, unsigned int index)
 {
-  if (this->Type != PropertyType::Bool)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::Bool);
+  assert(index < this->BoolValues.size());
   this->BoolValues[index] = value;
 }
 
 bool CodesProperty::GetBool(unsigned int index)
 {
-  if (this->Type != PropertyType::Bool)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::Bool);
+  assert(index < this->BoolValues.size());
   return this->BoolValues[index];
 }
 
 std::vector<bool>& CodesProperty::GetBoolElements()
 {
-  if (this->Type != PropertyType::Bool)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::Bool);
   return this->BoolValues;
 }
 
@@ -146,28 +139,21 @@ std::vector<bool>& CodesProperty::GetBoolElements()
 
 void CodesProperty::Set(int value, unsigned int index)
 {
-  if (this->Type != PropertyType::Int)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::Int);
+  assert(index < this->IntValues.size());
   this->IntValues[index] = value;
 }
 
 int CodesProperty::GetInt(unsigned int index)
 {
-  if (this->Type != PropertyType::Int)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::Int);
+  assert(index < this->IntValues.size());
   return this->IntValues[index];
 }
 
 std::vector<int>& CodesProperty::GetIntElements()
 {
-  if (this->Type != PropertyType::Int)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::Int);
   return this->IntValues;
 }
 
@@ -175,28 +161,21 @@ std::vector<int>& CodesProperty::GetIntElements()
 
 void CodesProperty::Set(double value, unsigned int index)
 {
-  if (this->Type != PropertyType::Double)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::Double);
+  assert(index < this->DoubleValues.size());
   this->DoubleValues[index] = value;
 }
 
 double CodesProperty::GetDouble(unsigned int index)
 {
-  if (this->Type != PropertyType::Double)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::Double);
+  assert(index < this->DoubleValues.size());
   return this->DoubleValues[index];
 }
 
 std::vector<double>& CodesProperty::GetDoubleElements()
 {
-  if (this->Type != PropertyType::Double)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::Double);
   return this->DoubleValues;
 }
 
@@ -204,28 +183,21 @@ std::vector<double>& CodesProperty::GetDoubleElements()
 
 void CodesProperty::Set(const std::string& value, unsigned int index)
 {
-  if (this->Type != PropertyType::String)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::String);
+  assert(index < this->StringValues.size());
   this->StringValues[index] = value;
 }
 
 std::string CodesProperty::GetString(unsigned int index)
 {
-  if (this->Type != PropertyType::String)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::String);
+  assert(index < this->StringValues.size());
   return this->StringValues[index];
 }
 
 std::vector<std::string>& CodesProperty::GetStringElements()
 {
-  if (this->Type != PropertyType::String)
-  {
-    // TODO:
-  }
+  assert(this->Type == PropertyType::String);
   return this->StringValues;
 }
 

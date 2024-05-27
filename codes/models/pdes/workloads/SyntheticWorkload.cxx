@@ -142,7 +142,28 @@ static void issue_event(SyntheticWorkloadState* ns, tw_lp* lp)
 static void svr_init(SyntheticWorkloadState* ns, tw_lp* lp)
 {
   ns->start_ts = 0.0;
-  auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
+  auto& orchestrator = codes::Orchestrator::GetInstance();
+  auto& lpConfig = orchestrator.GetLPConfig(LP_NAME);
+  if (lpConfig.Properties.Has("traffic"))
+  {
+    auto traffic_type = lpConfig.Properties.GetString("traffic");
+    if (traffic_type == "uniform")
+    {
+      traffic = UNIFORM;
+    }
+  }
+
+  if (lpConfig.Properties.Has("arrival_time"))
+  {
+    arrival_time = lpConfig.Properties.GetDouble("arrival_time");
+  }
+
+  if (lpConfig.Properties.Has("num_messages"))
+  {
+    num_msgs = lpConfig.Properties.GetInt("num_messages");
+  }
+
+  auto& mapper = orchestrator.GetMapper();
   num_nodes = mapper.GetLPTypeCount(LP_NAME);
 
   issue_event(ns, lp);

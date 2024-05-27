@@ -9,6 +9,7 @@
 //============================================================================
 
 #include "codes/orchestrator/Orchestrator.h"
+#include "codes/LPTypeConfiguration.h"
 #include "codes/SupportedLPTypes.h"
 #include "codes/lp-type-lookup.h"
 #include "codes/mapping/Mapper.h"
@@ -197,6 +198,18 @@ void Orchestrator::ReportModelNetStats()
 std::string Orchestrator::GetParentPath()
 {
   return this->ParentDir;
+}
+
+LPTypeConfig& Orchestrator::GetLPConfig(const std::string& name)
+{
+  for (auto& config : this->LPConfigs)
+  {
+    if (config.ModelName == name)
+    {
+      return config;
+    }
+  }
+  tw_error(TW_LOC, "could not find config for lp type ", name.c_str());
 }
 
 } // end namespace codes

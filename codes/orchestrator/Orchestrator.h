@@ -71,6 +71,7 @@ public:
 
   CodesPropertyCollection& GetSimulationConfig() { return this->SimConfig; }
   const std::vector<LPTypeConfig>& GetLPTypeConfigs() { return this->LPConfigs; }
+  LPTypeConfig& GetLPConfig(const std::string& name);
   Agraph_t* GetGraph() { return this->Graph; }
 
 private:

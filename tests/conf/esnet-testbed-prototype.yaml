@@ -7,6 +7,9 @@ host_config0:
   type: host
   model: SyntheticWorkload 
   node_ids: [host0, host1, host2, host3]
+  traffic: uniform
+  num_messages: 30
+  arrival_time: 1000.0
 
 simulation:
   packet_size: 512 
