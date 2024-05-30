@@ -38,7 +38,7 @@ set(srcs
 # workload
   workload/codes-workload.c
   workload/methods/codes-checkpoint-wrkld.c
-  workload/methods/codes-iomock-wrkld.c
+  workload/methods/codes-iomock-wrkld.cxx
   workload/methods/test-workload-method.c
 )
 

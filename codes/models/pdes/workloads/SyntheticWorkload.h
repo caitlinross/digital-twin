@@ -15,9 +15,6 @@
 
 #include "codes/model-net/model-net.h"
 
-// TODO: make configurable
-#define PAYLOAD_SZ 2048
-
 /* type of events */
 enum class SyntheticWorkloadEventTypes
 {

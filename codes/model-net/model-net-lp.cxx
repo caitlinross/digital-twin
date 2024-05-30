@@ -6,9 +6,11 @@
 
 #include <assert.h>
 #include <cstring>
+#include <iostream>
 #include <stddef.h>
 
 #include "codes/GlobalDefines.h"
+#include "codes/LPTypeConfiguration.h"
 #include "codes/codes.h"
 #include "codes/lp-type-lookup.h"
 #include "codes/mapping/Mapper.h"
@@ -246,76 +248,79 @@ static void base_read_config(const char* anno, model_net_base_params* p)
     p->sched_params.type = MN_SCHED_FCFS;
   }
 
-  // TODO: need to support the following config options
   p->num_queues = 1;
-  if (!g_tw_mynode)
+  if (simConfig.Has("num_injection_queues"))
   {
-    fprintf(stdout,
-      "NIC num injection port not specified, "
-      "setting to %d\n",
-      p->num_queues);
+    p->num_queues = simConfig.GetInt("num_injection_queues");
+  }
+  else if (!g_tw_mynode)
+  {
+    std::cout << "NIC num injection port not specified, setting to " << p->num_queues << std::endl;
   }
 
   p->nic_seq_delay = 10;
-  if (!g_tw_mynode)
+  if (simConfig.Has("nic_seq_delay"))
   {
-    fprintf(stdout,
-      "NIC seq delay not specified, "
-      "setting to %lf\n",
-      p->nic_seq_delay);
+    p->nic_seq_delay = simConfig.GetInt("nic_seq_delay");
+  }
+  else if (!g_tw_mynode)
+  {
+    std::cout << "NIC seq delay not specified, setting to " << p->nic_seq_delay << std::endl;
   }
 
   p->node_copy_queues = 1;
-  if (!g_tw_mynode)
+  if (simConfig.Has("node_copy_queues"))
   {
-    fprintf(stdout,
-      "NIC num copy queues not specified, "
-      "setting to %d\n",
-      p->node_copy_queues);
+    p->node_copy_queues = simConfig.Has("node_copy_queues");
+  }
+  else if (!g_tw_mynode)
+  {
+    std::cout << "NIC num copy queues not specified, setting to " << p->node_copy_queues
+              << std::endl;
   }
 
   // get scheduler-specific parameters
-  // TODO:
-  // if (p->sched_params.type == MN_SCHED_PRIO)
-  // {
-  //   // prio scheduler uses default parameters
-  //   int* num_prios = &p->sched_params.u.prio.num_prios;
-  //   enum sched_type* sub_stype = &p->sched_params.u.prio.sub_stype;
-  //   // number of priorities to allocate
-  //   ret = configuration_get_value_int(&config, "PARAMS", "prio-sched-num-prios", anno,
-  //   num_prios); if (ret != 0)
-  //     *num_prios = 10;
-  //
-  //   ret = configuration_get_value(
-  //     &config, "PARAMS", "prio-sched-sub-sched", anno, sched, MAX_NAME_LENGTH);
-  //   if (ret <= 0)
-  //     *sub_stype = MN_SCHED_FCFS;
-  //   else
-  //   {
-  //     int i;
-  //     for (i = 0; i < MAX_SCHEDS; i++)
-  //     {
-  //       if (strcmp(sched_names[i], sched) == 0)
-  //       {
-  //         *sub_stype = static_cast<sched_type>(i);
-  //         break;
-  //       }
-  //     }
-  //     if (i == MAX_SCHEDS)
-  //     {
-  //       tw_error(TW_LOC,
-  //         "Unknown value for "
-  //         "PARAMS:prio-sched-sub-sched %s",
-  //         sched);
-  //     }
-  //     else if (i == MN_SCHED_PRIO)
-  //     {
-  //       tw_error(TW_LOC, "priority scheduler cannot be used as a "
-  //                        "priority scheduler's sub sched "
-  //                        "(PARAMS:prio-sched-sub-sched)");
-  //     }
-  //   }
-  // }
+  if (p->sched_params.type == MN_SCHED_PRIO)
+  {
+    // prio scheduler uses default parameters
+    // number of priorities to allocate
+    if (simConfig.Has("prio-sched-num-prios"))
+    {
+      p->sched_params.u.prio.num_prios = simConfig.GetInt("prio-sched-num-prios");
+    }
+    else
+    {
+      p->sched_params.u.prio.num_prios = 10;
+    }
+
+    if (!simConfig.Has("prio-sched-sub-sched"))
+    {
+      p->sched_params.u.prio.sub_stype = MN_SCHED_FCFS;
+    }
+    else
+    {
+      auto sched = simConfig.GetString("prio-sched-sub-sched");
+      int i;
+      for (i = 0; i < MAX_SCHEDS; i++)
+      {
+        if (sched_names[i] == sched)
+        {
+          p->sched_params.u.prio.sub_stype = static_cast<sched_type>(i);
+          break;
+        }
+      }
+      if (i == MAX_SCHEDS)
+      {
+        tw_error(TW_LOC, "Unknown value for PARAMS:prio-sched-sub-sched %s", sched.c_str());
+      }
+      else if (i == MN_SCHED_PRIO)
+      {
+        tw_error(TW_LOC, "priority scheduler cannot be used as a "
+                         "priority scheduler's sub sched "
+                         "(prio-sched-sub-sched)");
+      }
+    }
+  }
 
   if (p->sched_params.type == MN_SCHED_FCFS_FULL ||
       (p->sched_params.type == MN_SCHED_PRIO &&
@@ -361,14 +366,12 @@ void model_net_base_configure()
   const auto& lpConfigs = orchestrator.GetLPTypeConfigs();
 
   // first grab all of the annotations and store locally
-  // TODO: I'm not really sure about what the annotation stuff is
-  // but I think we need an entry in annos and all_params for each model net lp
+  // TODO: handle annotations
   for (int c = 0; c < lpConfigs.size(); c++)
   {
     const auto& lpConf = lpConfigs[c];
     if (lpConf.ModelName.find("modelnet_") != std::string::npos)
     {
-      // TODO: handle annotations
       // we're just assuming they're all unannotated for now
       // if (amap->has_unanno_lp)
       {
@@ -416,13 +419,9 @@ void model_net_base_lp_init(model_net_base_state* ns, tw_lp* lp)
     tw_error(TW_LOC, "ns->net_id for lp gid %d was not correctly set\n", lp->gid);
   }
 
-  // so for simplep2p example this should actually be 1, not 3, so it's not just simply getting the
-  // count of a specifc LP type
-  // so need to check with dragonfly sim then, so i think for the terminal lp, it would be that
-  // count within a repetition and similarly for the router lp
-  // so then in our case, it should just be 1 for now?
-  // TODO:
-  ns->nics_per_router = 1; // mapper->GetLPCount(lp_type_name);
+  // TODO: not sure if this is always correct, but at least it should be for the situations
+  // we have currently
+  ns->nics_per_router = mapper.GetDestinationLPCount(lp->gid, codes::ComponentType::Host);
 
   ns->msg_id = 0;
   ns->next_available_time = 0;

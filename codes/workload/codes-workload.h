@@ -339,7 +339,7 @@ extern "C"
   /* implementation structure */
   struct codes_workload_method
   {
-    char* method_name; /* name of the generator */
+    char const* method_name; /* name of the generator */
     void* (*codes_workload_read_config)(
       char const* section_name, char const* annotation, int num_ranks);
     int (*codes_workload_load)(const char* params, int app_id, int rank);

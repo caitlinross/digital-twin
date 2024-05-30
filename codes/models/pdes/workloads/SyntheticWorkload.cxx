@@ -16,24 +16,19 @@
 #include "codes/orchestrator/Orchestrator.h"
 #include "codes/util/CodesUtils.h"
 
-#define PAYLOAD_SZ 2048
-
 namespace
 {
 
 const std::string LP_NAME = "SyntheticWorkload";
-
-} // end anon namespace
-
 static int NETWORK_ID = 0;
+
 static int traffic = 1;
 static double arrival_time = 1000.0;
-
+static int payload_size = 2048;
+static int num_msgs = 20;
 static unsigned long long num_nodes = 0;
 
-static unsigned int lp_io_use_suffix = 0;
-static int do_lp_io = 0;
-static int num_msgs = 20;
+} // end anon namespace
 
 /* type of synthetic traffic */
 // Only supporting Uniform for now
@@ -163,6 +158,11 @@ static void svr_init(SyntheticWorkloadState* ns, tw_lp* lp)
     num_msgs = lpConfig.Properties.GetInt("num_messages");
   }
 
+  if (lpConfig.Properties.Has("payload_size"))
+  {
+    payload_size = lpConfig.Properties.GetInt("payload_size");
+  }
+
   auto& mapper = orchestrator.GetMapper();
   num_nodes = mapper.GetLPTypeCount(LP_NAME);
 
@@ -223,9 +223,9 @@ static void handle_kickoff_event(
   assert(local_dest < num_nodes);
   global_dest = mapper.GetLPIdFromRelativeId(local_dest, lp_type_name);
   ns->msg_sent_count++;
-  m->event_rc =
-    model_net_event(NETWORK_ID, "test", global_dest, PAYLOAD_SZ, 0.0, sizeof(SyntheticWorkloadMsg),
-      (const void*)m_remote, sizeof(SyntheticWorkloadMsg), (const void*)m_local, lp);
+  m->event_rc = model_net_event(NETWORK_ID, "test", global_dest, payload_size, 0.0,
+    sizeof(SyntheticWorkloadMsg), (const void*)m_remote, sizeof(SyntheticWorkloadMsg),
+    (const void*)m_local, lp);
 
   issue_event(ns, lp);
   return;
@@ -273,9 +273,9 @@ static void svr_finalize(SyntheticWorkloadState* ns, tw_lp* lp)
 
   printf("server %llu recvd %d bytes in %f seconds, %f MiB/s sent_count %d recvd_count %d "
          "local_count %d \n",
-    (unsigned long long)lp->gid, PAYLOAD_SZ * ns->msg_recvd_count,
+    (unsigned long long)lp->gid, payload_size * ns->msg_recvd_count,
     codes::NSToSeconds(ns->end_ts - ns->start_ts),
-    ((double)(PAYLOAD_SZ * ns->msg_sent_count) / (double)(1024 * 1024) /
+    ((double)(payload_size * ns->msg_sent_count) / (double)(1024 * 1024) /
       codes::NSToSeconds(ns->end_ts - ns->start_ts)),
     ns->msg_sent_count, ns->msg_recvd_count, ns->local_recvd_count);
   return;

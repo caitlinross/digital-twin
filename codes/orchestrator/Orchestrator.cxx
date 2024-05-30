@@ -11,10 +11,12 @@
 #include "codes/orchestrator/Orchestrator.h"
 #include "codes/LPTypeConfiguration.h"
 #include "codes/SupportedLPTypes.h"
+#include "codes/codes.h"
 #include "codes/lp-type-lookup.h"
 #include "codes/mapping/Mapper.h"
 #include "codes/model-net/model-net.h"
 #include "codes/orchestrator/ConfigParser.h"
+#include "mpi.h"
 
 #include <filesystem>
 #include <iostream>
@@ -28,11 +30,15 @@ Orchestrator* Orchestrator::Instance = nullptr;
 bool Orchestrator::Destroyed = false;
 
 Orchestrator::Orchestrator()
-  : Comm(MPI_COMM_WORLD)
-  , Parser(std::make_unique<ConfigParser>())
+  : Parser(std::make_unique<ConfigParser>())
   , LPTypeCallbacks(static_cast<int>(CodesLPTypes::NumberOfTypes))
   , NetworkIdCallbacks(static_cast<int>(CodesLPTypes::NumberOfTypes))
 {
+  // sets MPI_COMM_CODES to MPI_COMM_ROSS
+  // Can be updated when calling ConfigureSimulation
+  // tw_init should be called before ever trying to get an instance of the Orchestrator
+  // since it may split MPI_COMM_ROSS
+  codes_comm_update();
 }
 
 Orchestrator::~Orchestrator()
@@ -141,34 +147,58 @@ void Orchestrator::ConfigureSimulation(const std::string& configFileName)
   }
 }
 
-// TODO: move the functionality for lp_type_register/lookup to here?
+void Orchestrator::ConfigureSimulation(const std::string& configFileName, MPI_Comm comm)
+{
+  MPI_COMM_CODES = comm;
+  this->ConfigureSimulation(configFileName);
+}
+
 bool Orchestrator::RegisterLPType(
   CodesLPTypes type, RegisterLPTypeCallback registrationFn, RegisterNetworkIdCallback netIdFn)
 {
-  // TODO: add in some error checks
+  if (!registrationFn)
+  {
+    // only the registrationFn is required
+    return false;
+  }
+
   if (type < CodesLPTypes::NumberOfTypes)
   {
     this->LPTypeCallbacks[static_cast<int>(type)] = registrationFn;
     this->NetworkIdCallbacks[static_cast<int>(type)] = netIdFn;
+    return true;
   }
-  return true;
+
+  if (type == CodesLPTypes::Custom)
+  {
+    std::cout << "When using a custom LP type, you must use the RegisterLPType(string, "
+                 "RegisterLPTypeCallback, RegisterNetworkIdCallback) signature"
+              << std::endl;
+  }
+  return false;
 }
 
 bool Orchestrator::RegisterLPType(const std::string& typeName,
   RegisterLPTypeCallback registrationFn, RegisterNetworkIdCallback netIdFn)
 {
-  // TODO: add in some error checks
+  if (!registrationFn)
+  {
+    // only the registrationFn is required
+    return false;
+  }
+
   auto type = ConvertLPTypeNameToEnum(typeName);
   if (type < CodesLPTypes::NumberOfTypes)
   {
     this->LPTypeCallbacks[static_cast<int>(type)] = registrationFn;
     this->NetworkIdCallbacks[static_cast<int>(type)] = netIdFn;
+    return true;
   }
   else if (type == CodesLPTypes::Custom)
   {
     if (this->CustomLPTypeInfo.count(typeName))
     {
-      std::cout << "WARNING: the callbacks for LP type " << typeName
+      std::cout << "WARNING the callbacks for LP type " << typeName
                 << " have already been registered. Check to make sure you didn't give the same "
                    "name to different LP types."
                 << std::endl;
@@ -178,8 +208,9 @@ bool Orchestrator::RegisterLPType(const std::string& typeName,
     this->CustomLPTypeInfo[typeName] = LPTypeInfo();
     this->CustomLPTypeInfo[typeName].RegistrationFn = registrationFn;
     this->CustomLPTypeInfo[typeName].NetworkIdFn = netIdFn;
+    return true;
   }
-  return true;
+  return false;
 }
 
 const tw_lptype* Orchestrator::LPTypeLookup(const std::string& name)
@@ -209,7 +240,7 @@ LPTypeConfig& Orchestrator::GetLPConfig(const std::string& name)
       return config;
     }
   }
-  tw_error(TW_LOC, "could not find config for lp type ", name.c_str());
+  tw_error(TW_LOC, "could not find config for lp type %s\n", name.c_str());
 }
 
 } // end namespace codes

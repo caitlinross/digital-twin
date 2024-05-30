@@ -27,7 +27,7 @@ namespace codes
 {
 
 /**
- * The Orchestrator takes in a config file and MPI communicator (default is MPI_COMM_WORLD)
+ * The Orchestrator takes in a config file and MPI communicator (default is MPI_COMM_ROSS)
  * and sets up the LPs, assignment to PEs, and mapping based on the topology.
  */
 class Orchestrator
@@ -38,7 +38,6 @@ public:
    */
   static Orchestrator& GetInstance();
 
-  // TODO: add ability to set MPI_COMM_CODES. just have default be MPI_COMM_WORLD
   // following two are very similar, except that ConfigureSimulation will do all of the
   // configuration (including ParseConfig)
   // Using ParseConfig directly enables you to have more control over setup, similarly to the way
@@ -46,6 +45,9 @@ public:
   // everything
   void ParseConfig(const std::string& configFileName);
   void ConfigureSimulation(const std::string& configFileName);
+
+  // Sets MPI_COMM_CODES to comm (it's MPI_COMM_ROSS by default).
+  void ConfigureSimulation(const std::string& configFileName, MPI_Comm comm);
 
   typedef void (*RegisterLPTypeCallback)();
   typedef void (*RegisterNetworkIdCallback)(int netId);
@@ -85,8 +87,6 @@ private:
   static Orchestrator* Instance;
   static bool Destroyed;
 
-  MPI_Comm Comm;
-
   std::string ParentDir;
 
   std::unique_ptr<ConfigParser> Parser;
@@ -112,7 +112,6 @@ private:
   std::map<std::string, LPTypeInfo> CustomLPTypeInfo;
 
   // need to store network ids from model_net_configure
-  // TODO: change to use a vector instead
   int* NetworkIds;
   int NumberOfNetworks;
 };

@@ -1,6 +1,6 @@
 # this example mimics the simplenet test in codes
 # this is going to be annoying with large networks...
-# we can have this approach for absolute flexibility, but
+# TODO: we can have this approach for absolute flexibility, but
 # need to some up with some way to make it so you don't have to write out a list of every
 # node id. maybe we could use regex? so you could say that your node_ids for router_config0
 # are the nodes that always start with "router"
@@ -13,6 +13,7 @@ host_config0:
   type: host
   model: SimpleServer 
   node_ids: [host0, host1, host2, host3, host4, host5, host6, host7, host8, host9, host10, host11, host12, host13, host14, host15]
+
 
 simulation:
   packet_size: 512 

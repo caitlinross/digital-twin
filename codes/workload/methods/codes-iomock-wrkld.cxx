@@ -51,8 +51,8 @@ static int params_eq(iomock_params const* a, iomock_params const* b)
 // comparison function for hash table
 static int rank_tbl_compare(void* key, struct qhash_head* link)
 {
-  struct rank_state* a = key;
-  struct rank_state* b = qhash_entry(link, struct rank_state, hash_link);
+  rank_state* a = reinterpret_cast<rank_state*>(key);
+  rank_state* b = qhash_entry(link, struct rank_state, hash_link);
   if (a->rank == b->rank && a->app_id == b->app_id)
     return 1;
   else
@@ -69,7 +69,7 @@ static void* iomock_workload_read_config(
   char const* section_name, char const* annotation, int num_ranks)
 {
   (void)num_ranks; // not needed for this workload
-  iomock_params* p = malloc(sizeof(*p));
+  iomock_params* p = reinterpret_cast<iomock_params*>(malloc(sizeof(*p)));
   assert(p);
 
   // defaults
@@ -150,7 +150,7 @@ static int iomock_workload_load(const char* params, int app_id, int rank)
   }
   if (ent == &app_params_list)
   {
-    ap = malloc(sizeof(*ap));
+    ap = reinterpret_cast<app_params*>(malloc(sizeof(*ap)));
     assert(ap);
     ap->params = *p;
     ap->app_id = app_id;
@@ -164,7 +164,7 @@ static int iomock_workload_load(const char* params, int app_id, int rank)
     assert(rank_tbl);
   }
 
-  struct rank_state* rs = malloc(sizeof(*rs));
+  rank_state* rs = reinterpret_cast<rank_state*>(malloc(sizeof(*rs)));
   assert(rs);
   rs->rank = rank;
   rs->app_id = app_id;
@@ -242,7 +242,7 @@ static void iomock_workload_get_next(int app_id, int rank, struct codes_workload
   return;
 }
 
-struct codes_workload_method iomock_workload_method = { .method_name = "iomock_workload",
+codes_workload_method iomock_workload_method = { .method_name = "iomock_workload",
   .codes_workload_read_config = iomock_workload_read_config,
   .codes_workload_load = iomock_workload_load,
   .codes_workload_get_next = iomock_workload_get_next,

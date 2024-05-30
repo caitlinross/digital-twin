@@ -8,6 +8,7 @@
 //
 //============================================================================
 
+#include "codes/codes.h"
 #include <mpi.h>
 #include <ross.h>
 
@@ -46,8 +47,8 @@ int main(int argc, char* argv[])
   g_tw_ts_end = codes::SecondsToNS(60 * 60 * 24 * 365); /* one year, in nsecs */
 
   int rank, nprocs;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+  MPI_Comm_rank(MPI_COMM_CODES, &rank);
+  MPI_Comm_size(MPI_COMM_CODES, &nprocs);
 
   // setup the orchestrator and pass the config file
   auto& orchestrator = codes::Orchestrator::GetInstance();
@@ -60,7 +61,7 @@ int main(int argc, char* argv[])
   {
     do_lp_io = 1;
     int flags = lp_io_use_suffix ? LP_IO_UNIQ_SUFFIX : 0;
-    int ret = lp_io_prepare(lp_io_dir, flags, &io_handle, MPI_COMM_WORLD);
+    int ret = lp_io_prepare(lp_io_dir, flags, &io_handle, MPI_COMM_CODES);
     assert(ret == 0 || !"lp_io_prepare failure");
   }
 
@@ -70,7 +71,7 @@ int main(int argc, char* argv[])
 
   if (do_lp_io)
   {
-    int ret = lp_io_flush(io_handle, MPI_COMM_WORLD);
+    int ret = lp_io_flush(io_handle, MPI_COMM_CODES);
     assert(ret == 0 || !"lp_io_flush failure");
   }
 

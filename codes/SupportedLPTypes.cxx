@@ -15,7 +15,6 @@ namespace codes
 
 CodesLPTypes ConvertLPTypeNameToEnum(std::string str)
 {
-  // TODO: convert to all lower, and perhaps just do a find?
   if (str.find("SimpleServer") != std::string::npos)
     return CodesLPTypes::SimpleServer;
   if (str.find("simplep2p") != std::string::npos)

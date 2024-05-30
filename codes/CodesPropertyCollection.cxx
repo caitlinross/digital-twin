@@ -58,10 +58,7 @@ bool CodesPropertyCollection::Has(const std::string& name)
 
 CodesProperty& CodesPropertyCollection::GetProperty(const std::string& name)
 {
-  if (!this->Has(name))
-  {
-    // TODO: error
-  }
+  assert(this->Has(name));
   return this->Properties[name];
 }
 

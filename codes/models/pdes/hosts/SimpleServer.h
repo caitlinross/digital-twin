@@ -18,10 +18,6 @@
 
 #include "codes/model-net/model-net.h"
 
-// TODO: make these configurable?
-#define NUM_REQS 2      /* number of requests sent by each server */
-#define PAYLOAD_SZ 4096 /* size of simulated data payload, bytes  */
-
 /* types of events that will constitute triton requests */
 enum class SimpleServerEventTypes
 {

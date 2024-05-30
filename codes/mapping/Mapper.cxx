@@ -14,6 +14,8 @@
 
 #include <ross-extern.h>
 
+#include "codes/LPTypeConfiguration.h"
+#include "codes/codes.h"
 #include "codes/lp-type-lookup.h"
 #include "codes/mapping/Mapper.h"
 #include "codes/orchestrator/Orchestrator.h"
@@ -27,7 +29,6 @@
 
 #define CODES_MAPPER_DEBUG 1
 
-// TODO: use MPI_COMM_CODES instead of world
 namespace codes
 {
 
@@ -241,30 +242,24 @@ void Mapper::MappingSetup(int offset)
   auto& simConfig = orchestrator.GetSimulationConfig();
 
   // configure mem-factor
-  // TODO:
-  // int mem_factor_conf;
-  // int rc = configuration_get_value_int(&config, "PARAMS", "pe_mem_factor", NULL,
-  //        &mem_factor_conf);
-  // if (rc == 0 && mem_factor_conf > 0)
-  //  mem_factor = mem_factor_conf;
+  if (simConfig.Has("pe_mem_factor"))
+  {
+    this->MemFactor = simConfig.GetInt("pe_mem_factor");
+  }
   g_tw_events_per_pe = this->MemFactor * this->GetLPsForPE();
-
-  // TODO: check for message_size in config and set to default value if not set
-  // TODO: eventually have a way to figure out what the value should be during set up
-  // and remove it completely as a config option
-  // configuration_get_value_int(&config, "PARAMS", "message_size", NULL, &message_size);
-  // if(!message_size)
-  //{
-  //    message_size = 256;
-  //    printf("\n Warning: ross message size not defined, resetting it to %d", message_size);
-  //}
 
   // we increment the number of RNGs used to let codes_local_latency use the
   // last one
   g_tw_nRNG_per_lp++;
   g_tw_nRNG_per_lp++; // Congestion Control gets its own RNG - second to last (CLL is last)
 
-  tw_define_lps(this->GetLPsForPE(), simConfig.GetInt("ross_message_size"));
+  // TODO: eventually have a way to figure out what the value should be during set up
+  // and remove it completely as a config option
+  if (simConfig.Has("ross_message_size"))
+  {
+    this->ROSSMessageSize = simConfig.GetInt("ross_message_size");
+  }
+  tw_define_lps(this->GetLPsForPE(), this->ROSSMessageSize);
 
   // use a similar computation to codes_mapping_init to compute the lpids and
   // offsets to use in tw_rand_initial_seed
@@ -354,7 +349,7 @@ tw_peid Mapper::GlobalMapping(tw_lpid gid)
 int Mapper::GetLPsForPE()
 {
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_CODES, &rank);
 #if CODES_MAPPER_DEBUG
   std::cout << this->LPsPerPEFloor + (static_cast<tw_lpid>(g_tw_mynode) < this->LPsLeftover)
             << " lps for rank " << rank << std::endl;
@@ -401,9 +396,6 @@ std::string Mapper::GetLPTypeName(tw_lpid gid)
 
 int Mapper::GetLPTypeCount(const std::string& lp_type_name)
 {
-  // TODO: will probably get more complicated once we figure out how to refer
-  // to different types of ML models? or maybe the ML model doesn't actually matter here,
-  // we just need to know the number of LPs of this type regardless of what ML model they're using
   int count = 0;
   const auto& lpConfigs = codes::Orchestrator::GetInstance().GetLPTypeConfigs();
   for (const auto& conf : lpConfigs)
@@ -433,8 +425,7 @@ tw_lpid Mapper::GetLPId(const std::string& lp_type_name, int offset)
     }
   }
 
-  // TODO: error
-  return -1;
+  tw_error(TW_LOC, "Could not get LP Id for %s with offset %d\n", lp_type_name.c_str(), offset);
 }
 
 int Mapper::GetRelativeLPId(tw_lpid gid)
@@ -504,6 +495,23 @@ int Mapper::GetDestinationLPCount(tw_lpid sender_gid, const std::string& dest_lp
   return count;
 }
 
+int Mapper::GetDestinationLPCount(tw_lpid sender_gid, ComponentType dest_lp_type)
+{
+  // given the sender_gid, we need to get the number of its connections of that type of component
+  int count = 0;
+  auto& lpConfigs = codes::Orchestrator::GetInstance().GetLPTypeConfigs();
+  auto senderNode = this->Nodes[sender_gid];
+  for (auto conn : senderNode->Connections)
+  {
+    if (conn && lpConfigs[conn->ConfigIdx].Type == dest_lp_type)
+    {
+      count++;
+    }
+  }
+
+  return count;
+}
+
 int Mapper::GetNumberUniqueLPTypes()
 {
   return codes::Orchestrator::GetInstance().GetLPTypeConfigs().size();
@@ -512,21 +520,6 @@ int Mapper::GetNumberUniqueLPTypes()
 std::string Mapper::GetLPTypeNameByTypeId(int id)
 {
   return codes::Orchestrator::GetInstance().GetLPTypeConfigs()[id].ModelName;
-}
-
-// TODO: calc the number of each type in setup so we don't have to calc whenever it's called
-int Mapper::GetNumberOfLPsForComponentType(ComponentType type)
-{
-  const auto& lpConfigs = codes::Orchestrator::GetInstance().GetLPTypeConfigs();
-  int count = 0;
-  for (const auto& conf : lpConfigs)
-  {
-    if (conf.Type == type)
-    {
-      count++;
-    }
-  }
-  return count;
 }
 
 } // end namespace codes

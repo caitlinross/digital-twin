@@ -109,12 +109,11 @@ public:
    * returns the number of potential destination LPs of dest_lp_name for sending LP sender_gid
    */
   int GetDestinationLPCount(tw_lpid sender_gid, const std::string& dest_lp_name);
+  int GetDestinationLPCount(tw_lpid sender_gid, ComponentType dest_lp_type);
 
   int GetNumberUniqueLPTypes();
 
   std::string GetLPTypeNameByTypeId(int id);
-
-  int GetNumberOfLPsForComponentType(ComponentType type);
 
 private:
   // disable copying objects
@@ -133,6 +132,7 @@ private:
   tw_lpid LPsLeftover = 0;
 
   int MemFactor = 256;
+  int ROSSMessageSize = 400;
 
   void MappingConfig();
 

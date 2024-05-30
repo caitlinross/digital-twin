@@ -19,6 +19,10 @@ namespace
 {
 
 static int NETWORK_ID = 0;
+static int num_requests = 2;    /* number of requests sent by each server */
+static int payload_size = 4096; /* size of simulated data payload, bytes  */
+
+const std::string LP_NAME = "SimpleServer";
 
 } // end anon namespace
 
@@ -53,7 +57,7 @@ tw_lptype SimpleServerLP = {
 
 void SimpleServerRegisterLPType()
 {
-  lp_type_register("SimpleServer", &SimpleServerLP);
+  lp_type_register(LP_NAME.c_str(), &SimpleServerLP);
 }
 
 const bool registered = codes::Orchestrator::GetInstance().RegisterLPType(
@@ -61,6 +65,18 @@ const bool registered = codes::Orchestrator::GetInstance().RegisterLPType(
 
 void simple_server_init(SimpleServerState* ns, tw_lp* lp)
 {
+  auto& orchestrator = codes::Orchestrator::GetInstance();
+  auto& lpConfig = orchestrator.GetLPConfig(LP_NAME);
+  if (lpConfig.Properties.Has("num_requests"))
+  {
+    num_requests = lpConfig.Properties.GetInt("num_requests");
+  }
+
+  if (lpConfig.Properties.Has("payload_size"))
+  {
+    payload_size = lpConfig.Properties.GetInt("payload_size");
+  }
+
   tw_event* e;
   SimpleServerMsg* m;
   tw_stime kickoff_time;
@@ -135,8 +151,8 @@ void svr_finalize(SimpleServerState* ns, tw_lp* lp)
   double t = codes::NSToSeconds(tw_now(lp) - ns->start_ts);
   printf("server %llu recvd %d bytes in %f seconds, %f MiB/s sent_count %d recvd_count %d "
          "local_count %d \n",
-    (unsigned long long)lp->gid, PAYLOAD_SZ * ns->msg_recvd_count, t,
-    ((double)(PAYLOAD_SZ * NUM_REQS) / (double)(1024 * 1024) / t), ns->msg_sent_count,
+    (unsigned long long)lp->gid, payload_size * ns->msg_recvd_count, t,
+    ((double)(payload_size * num_requests) / (double)(1024 * 1024) / t), ns->msg_sent_count,
     ns->msg_recvd_count, ns->local_recvd_count);
   return;
 }
@@ -159,13 +175,13 @@ static void handle_kickoff_event(SimpleServerState* ns, SimpleServerMsg* m, tw_l
 
   auto& mapper = codes::Orchestrator::GetInstance().GetMapper();
   /* each server sends a request to the next highest server */
-  auto numServers = mapper.GetLPTypeCount("SimpleServer");
+  auto numServers = mapper.GetLPTypeCount(LP_NAME);
   auto destRelId = (mapper.GetRelativeLPId(lp->gid) + 1) % numServers;
 
-  int dest_id = mapper.GetLPIdFromRelativeId(destRelId, "SimpleServer");
+  int dest_id = mapper.GetLPIdFromRelativeId(destRelId, LP_NAME);
   std::cout << "lp " << lp->gid << " sending to lp " << dest_id << std::endl;
 
-  m->ret = model_net_event(NETWORK_ID, "test", dest_id, PAYLOAD_SZ, 0.0, sizeof(SimpleServerMsg),
+  m->ret = model_net_event(NETWORK_ID, "test", dest_id, payload_size, 0.0, sizeof(SimpleServerMsg),
     &m_remote, sizeof(SimpleServerMsg), &m_local, lp);
   ns->msg_sent_count++;
 }
@@ -220,9 +236,9 @@ static void handle_ack_event(SimpleServerState* ns, SimpleServerMsg* m, tw_lp* l
   memcpy(&m_remote, &m_local, sizeof(SimpleServerMsg));
   m_remote.EventType = SimpleServerEventTypes::REQ;
 
-  if (ns->msg_sent_count < NUM_REQS)
+  if (ns->msg_sent_count < num_requests)
   {
-    m->ret = model_net_event(NETWORK_ID, "test", m->src, PAYLOAD_SZ, 0.0, sizeof(SimpleServerMsg),
+    m->ret = model_net_event(NETWORK_ID, "test", m->src, payload_size, 0.0, sizeof(SimpleServerMsg),
       &m_remote, sizeof(SimpleServerMsg), &m_local, lp);
     ns->msg_sent_count++;
     m->incremented_flag = 1;
@@ -250,6 +266,6 @@ static void handle_req_event(SimpleServerState* ns, SimpleServerMsg* m, tw_lp* l
   ns->msg_recvd_count++;
 
   // mm Q: What should be the size of an ack message? may be a few bytes? or larger..?
-  m->ret = model_net_event(NETWORK_ID, "test", m->src, PAYLOAD_SZ, 0.0, sizeof(SimpleServerMsg),
+  m->ret = model_net_event(NETWORK_ID, "test", m->src, payload_size, 0.0, sizeof(SimpleServerMsg),
     &m_remote, sizeof(SimpleServerMsg), &m_local, lp);
 }

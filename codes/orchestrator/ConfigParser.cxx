@@ -248,7 +248,10 @@ Agraph_t* ConfigParser::ParseGraphVizConfig()
 
   // can't use ifstream since graphviz is a C lib
   FILE* fp = fopen(this->DOTFileName.c_str(), "r");
-  // TODO: check for errors
+  if (!fp)
+  {
+    tw_error(TW_LOC, "could not open file %s\n", this->DOTFileName.c_str());
+  }
 
   Agraph_t* graph = agread(fp, 0);
   if (!graph)
